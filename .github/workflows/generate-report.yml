@@ -57,7 +57,8 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add reports/
+          git add -f reports/index.html reports/diff.json
+          git add -f reports/network_tripartite.html reports/network_bipartite.html 2>/dev/null || true
           git diff --staged --quiet || git commit -m "chore: regenerate report [skip ci]"
           git pull --rebase
           git push
