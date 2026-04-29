@@ -10,8 +10,8 @@ import pandas as pd
 import pytest
 
 from dwr_report.charts.treemaps import treemap, treemap_coverage
-from dwr_report.data.loader import PartnershipData
-from dwr_report.data.taxonomy import enrich_science_fields
+from dwr_report.ingest.loader import PartnershipData
+from dwr_report.ingest.taxonomy import enrich_science_fields
 
 BASE_ROW = {
     "ID": 1,

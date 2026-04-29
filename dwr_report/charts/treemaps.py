@@ -12,7 +12,7 @@ from typing import Any
 import pandas as pd
 import plotly.express as px
 
-from dwr_report.data.loader import PartnershipData, normalize_colname
+from dwr_report.ingest.loader import PartnershipData, normalize_colname
 
 
 def treemap(

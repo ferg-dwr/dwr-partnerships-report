@@ -16,7 +16,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
-from dwr_report.data.loader import PartnershipData, to_list_if_listlike
+from dwr_report.ingest.loader import PartnershipData, to_list_if_listlike
 
 # vis-network CDN reference injected into templates as {{ vis_js_cdn }}
 _VIS_JS_CDN = "https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"

@@ -12,7 +12,8 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from dwr_report import ReportChart
+from dwr_report.charts.treemaps import treemap
+from dwr_report.ingest.loader import PartnershipData
 
 
 def _diff_banner(diff_path: Path) -> str:
@@ -81,10 +82,10 @@ def _diff_banner(diff_path: Path) -> str:
 
 
 def generate(csv_path: Path, diff_path: Path, output_path: Path) -> None:
-    rc = ReportChart(csv_path)
+    data = PartnershipData(csv_path)
 
-    # Treemap: science fields hierarchy
-    treemap_fig = rc.treemap(
+    treemap_fig = treemap(
+        data,
         path=["Science and Technology Fields"],
         title="Partnerships by Science & Technology Field",
     )

@@ -12,7 +12,7 @@ from typing import Any
 
 import pandas as pd
 
-from dwr_report.data.loader import PartnershipData
+from dwr_report.ingest.loader import PartnershipData
 
 
 def load_taxonomy(taxonomy_path: str | Path) -> dict[str, str]:
