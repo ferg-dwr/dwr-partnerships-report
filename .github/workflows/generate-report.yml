@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pip install pandas plotly jinja2 kaleido
 
+      - name: Create reports directory
+        run: mkdir -p reports
+
       - name: Extract previous latest.csv from git history
         run: |
           git show HEAD~1:data/latest.csv > data/previous.csv 2>/dev/null \
