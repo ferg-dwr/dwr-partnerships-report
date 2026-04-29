@@ -20,6 +20,10 @@ from dwr_report.charts.treemaps import treemap, treemap_coverage
 from dwr_report.ingest.loader import PartnershipData
 from dwr_report.ingest.taxonomy import enrich_science_fields
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
 # Path to taxonomy CSV relative to repo root — used by coverage treemap
 # and science field enrichment
 TAXONOMY_PATH = Path("data/dwr_custom_taxonomy.csv")
@@ -27,6 +31,11 @@ TAXONOMY_PATH = Path("data/dwr_custom_taxonomy.csv")
 # Jinja2 template paths relative to repo root
 TRIPARTITE_TEMPLATE = Path("templates/network_tripartite.html")
 BIPARTITE_TEMPLATE = Path("templates/network_bipartite.html")
+
+
+# ---------------------------------------------------------------------------
+# Diff summary → HTML
+# ---------------------------------------------------------------------------
 
 
 def _diff_banner(diff_path: Path) -> str:
@@ -79,6 +88,10 @@ def _diff_banner(diff_path: Path) -> str:
             </details>"""
         changes_html = f"<div class='changes'>{rows}</div>"
 
+    # TODO: Enhance diff banner with side-by-side comparison cards per changed
+    # partnership, with changed fields highlighted in yellow rather than collapsed
+    # in a <details> table. Consider a "what changed" card layout showing
+    # old value → new value inline per field.
     return f"""
     <div class="diff-summary">
       <h2>What changed in this upload</h2>
@@ -92,6 +105,11 @@ def _diff_banner(diff_path: Path) -> str:
     </div>"""
 
 
+# ---------------------------------------------------------------------------
+# Chart generation helpers
+# ---------------------------------------------------------------------------
+
+
 def _build_plotly_charts(data: PartnershipData, taxonomy_path: Path) -> dict[str, str]:
     """
     Generate all Plotly charts and return them as inline HTML strings.
@@ -99,6 +117,9 @@ def _build_plotly_charts(data: PartnershipData, taxonomy_path: Path) -> dict[str
     """
     charts: dict[str, str] = {}
 
+    # TODO: Accept diff_result parameter and annotate charts with change data:
+    # - Treemap: outline newly added partnership science fields, flag removed ones
+    # - Pass new_ids/removed_ids to distinguish new vs existing partnerships
     # Science fields treemap
     fig = treemap(
         data,
@@ -136,6 +157,10 @@ def _build_network_charts(
     """
     iframes: dict[str, str] = {}
 
+    # TODO: Accept diff_result parameter and annotate network graphs:
+    # - New nodes (from new_ids): render with green glow or star marker
+    # - Removed nodes (from removed_ids): render faded/dotted
+    # - Changed edges: highlight in yellow
     # Tripartite: Science Field <-> Staff <-> Division
     # Note: enrich_science_fields() must have been called before this
     if "1st Level Science Category" in data.df.columns:
@@ -145,7 +170,8 @@ def _build_network_charts(
             out.write_text(html, encoding="utf-8")
             iframes["network_tripartite"] = (
                 '<iframe src="network_tripartite.html" '
-                'width="100%" height="800px" frameborder="0"></iframe>'
+                'width="100%" height="800px" frameborder="0" '
+                'sandbox="allow-scripts allow-same-origin"></iframe>'
             )
         except Exception as e:
             print(f"  Warning: tripartite network failed — {e}")
@@ -163,13 +189,19 @@ def _build_network_charts(
         out.write_text(html, encoding="utf-8")
         iframes["network_bipartite"] = (
             '<iframe src="network_bipartite.html" '
-            'width="100%" height="800px" frameborder="0"></iframe>'
+            'width="100%" height="800px" frameborder="0" '
+            'sandbox="allow-scripts allow-same-origin"></iframe>'
         )
     except Exception as e:
         print(f"  Warning: bipartite network failed — {e}")
         iframes["network_bipartite"] = f"<p class='chart-missing'>Chart unavailable: {e}</p>"
 
     return iframes
+
+
+# ---------------------------------------------------------------------------
+# HTML assembly
+# ---------------------------------------------------------------------------
 
 
 def _assemble_html(
@@ -313,6 +345,11 @@ def _assemble_html(
 
 </body>
 </html>"""
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 
 def generate(
