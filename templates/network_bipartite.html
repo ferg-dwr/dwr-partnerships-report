@@ -4,9 +4,6 @@
 <meta charset="utf-8"/>
 
 <script src="{{ vis_js_cdn }}"></script>
-<script>
-window.addEventListener('load', initNetwork);
-</script>
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -590,6 +587,8 @@ network.on("click", function(params) {
 });
 
 } // end initNetwork
+
+window.addEventListener('load', initNetwork);
 </script>
 </body>
 </html>
