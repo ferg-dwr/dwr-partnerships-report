@@ -44,3 +44,7 @@ Desktop.ini
 
 # Project-specific
 data/previous.csv    # Temp file created during Actions run, never committed
+
+# Generated reports — committed only by GitHub Actions
+reports/*
+!reports/.gitkeep
