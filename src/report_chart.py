@@ -161,7 +161,8 @@ class ReportChart:
         return dict(
             zip(
                 tax["2nd level (Science Field)"].str.strip(),
-                tax["1st Level (Science Category)"].str.strip(), strict=False,
+                tax["1st Level (Science Category)"].str.strip(),
+                strict=False,
             )
         )
 
@@ -427,7 +428,9 @@ class ReportChart:
             return [int(PADDING + i * step) for i in range(n)]
 
         staff_positions = {s: y for s, y in zip(staff, spread_evenly(staff), strict=False)}
-        division_positions = {d: y for d, y in zip(divisions, spread_evenly(divisions), strict=False)}
+        division_positions = {
+            d: y for d, y in zip(divisions, spread_evenly(divisions), strict=False)
+        }
 
         field_positions: dict[str, int] = {}
         field_node_colors: dict[str, str] = {}
@@ -682,7 +685,7 @@ class ReportChart:
                 }
             )
 
-        max_weight = edge_weights["weight"].max()
+        max_weight = int(edge_weights["weight"].max())
 
         def scale_width(w: int) -> float:
             return 1 + (7 * (w - 1) / max(max_weight - 1, 1))
