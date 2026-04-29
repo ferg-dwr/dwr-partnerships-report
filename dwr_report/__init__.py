@@ -1,5 +1,16 @@
 """DWR Partnerships Report — public API."""
 
-from dwr_report.charts.report_chart import ReportChart
+from dwr_report.charts.networks import network_bipartite, network_tripartite, save_html
+from dwr_report.charts.treemaps import treemap, treemap_coverage
+from dwr_report.data.loader import PartnershipData
+from dwr_report.data.taxonomy import enrich_science_fields
 
-__all__ = ["ReportChart"]
+__all__ = [
+    "PartnershipData",
+    "enrich_science_fields",
+    "network_bipartite",
+    "network_tripartite",
+    "save_html",
+    "treemap",
+    "treemap_coverage",
+]

@@ -14,10 +14,6 @@ from pathlib import Path
 
 from dwr_report import ReportChart
 
-# ---------------------------------------------------------------------------
-# Diff summary → HTML
-# ---------------------------------------------------------------------------
-
 
 def _diff_banner(diff_path: Path) -> str:
     """Render the diff result as an HTML summary banner."""
@@ -82,11 +78,6 @@ def _diff_banner(diff_path: Path) -> str:
       {warning_html}
       {changes_html}
     </div>"""
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 
 def generate(csv_path: Path, diff_path: Path, output_path: Path) -> None:
