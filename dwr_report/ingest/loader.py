@@ -92,8 +92,7 @@ class PartnershipData:
         df.columns = [normalize_colname(c) for c in df.columns]
 
         for col in df.columns:
-            if df[col].dtype == "object":
-                df[col] = df[col].map(lambda v: v.strip() if isinstance(v, str) else v)
+            df[col] = df[col].apply(lambda v: v.strip() if isinstance(v, str) else v)
 
         for col in LIST_LIKE_COLUMNS:
             if col in df.columns:
