@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-# Make sure src/ is on the path when called from repo root
-sys.path.insert(0, str(Path(__file__).parent))
+from dwr_report import ReportChart
 
-from report_chart import ReportChart
+# ---------------------------------------------------------------------------
+# Diff summary → HTML
+# ---------------------------------------------------------------------------
 
 
 def _diff_banner(diff_path: Path) -> str:
@@ -34,6 +34,7 @@ def _diff_banner(diff_path: Path) -> str:
     collision_warnings = [w for w in warnings if w["kind"] == "collision"]
     orphan_warnings = [w for w in warnings if w["kind"] == "orphan"]
 
+    # Build warning HTML
     warning_html = ""
     if collision_warnings:
         items = "".join(f"<li>ID {w['id']}: {w['message']}</li>" for w in collision_warnings)
@@ -47,10 +48,11 @@ def _diff_banner(diff_path: Path) -> str:
         items = "".join(f"<li>ID {w['id']}: {w['message']}</li>" for w in orphan_warnings)
         warning_html += f"""
         <div class="banner banner--warn">
-          <strong>i Removed IDs (verify intentional)</strong>
+          <strong>i️ Removed IDs (verify intentional)</strong>
           <ul>{items}</ul>
         </div>"""
 
+    # Build changes detail
     changes_html = ""
     if diff.get("changed_rows"):
         rows = ""
@@ -80,6 +82,11 @@ def _diff_banner(diff_path: Path) -> str:
       {warning_html}
       {changes_html}
     </div>"""
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 
 def generate(csv_path: Path, diff_path: Path, output_path: Path) -> None:

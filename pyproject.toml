@@ -46,7 +46,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["dwr_report"]
 
 # ---------------------------------------------------------------------------
 # Mypy — static type checking
@@ -58,16 +58,21 @@ strict = false                  # Start permissive; tighten over time
 warn_return_any = true
 warn_unused_ignores = true
 ignore_missing_imports = true   # Plotly/Jinja2 stubs are incomplete
-files = ["src/diff.py", "src/generate_report.py"]
+files = [
+    "dwr_report/pipeline/diff.py",
+    "dwr_report/pipeline/generate_report.py",
+    "dwr_report/charts/report_chart.py",
+]
 
 # ---------------------------------------------------------------------------
 # Pytest
 # ---------------------------------------------------------------------------
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts   = "-v --tb=short --cov=src --cov-report=term-missing"
+testpaths  = ["tests"]
+pythonpath = ["."]
+addopts    = "-v --tb=short --cov=dwr_report --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["src"]
+source = ["dwr_report"]
 omit   = ["tests/*"]
