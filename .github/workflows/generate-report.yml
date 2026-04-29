@@ -1,0 +1,72 @@
+name: Generate Partnership Report
+
+on:
+  push:
+    paths:
+      - "data/latest.csv"   # Only runs when a new CSV is uploaded
+
+permissions:
+  contents: write           # Needed to commit generated reports back
+  pages: write
+  id-token: write
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo (with full history for diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2    # Need current + previous commit for diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pandas plotly jinja2 kaleido
+
+      - name: Extract previous latest.csv from git history
+        run: |
+          git show HEAD~1:data/latest.csv > data/previous.csv 2>/dev/null \
+            || cp data/latest.csv data/previous.csv
+          # If this is the very first commit, previous = current (empty diff)
+
+      - name: Run diff + ID watchdog
+        id: diff
+        run: |
+          python src/diff.py data/previous.csv data/latest.csv reports/diff.json
+        # Exit code 2 = collision warnings → blocks report publish (see diff.py)
+
+      - name: Generate report
+        run: |
+          python src/generate_report.py \
+            --csv data/latest.csv \
+            --diff reports/diff.json \
+            --output reports/index.html
+
+      - name: Commit generated reports
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/
+          git diff --staged --quiet || git commit -m "chore: regenerate report [skip ci]"
+          git push
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/
+
+  deploy-pages:
+    needs: generate-report
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
