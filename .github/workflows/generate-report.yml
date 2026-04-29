@@ -28,7 +28,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install pandas plotly jinja2 kaleido
+        run: pip install -e ".[dev]"
 
       - name: Create reports directory
         run: mkdir -p reports
@@ -50,7 +50,8 @@ jobs:
           python dwr_report/pipeline/generate_report.py \
             --csv data/latest.csv \
             --diff reports/diff.json \
-            --output reports/index.html
+            --output reports/index.html \
+            --taxonomy data/dwr_custom_taxonomy.csv
 
       - name: Commit generated reports
         run: |
