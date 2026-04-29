@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main]        # Runs on PRs targeting main (i.e. develop → main)
 
 jobs:
   lint-and-test:
@@ -24,13 +24,13 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Ruff — check formatting
-        run: ruff format --check src/ tests/
+        run: ruff format --check dwr_report/ tests/
 
       - name: Ruff — lint
-        run: ruff check src/ tests/
+        run: ruff check dwr_report/ tests/
 
       - name: Mypy — type check
-        run: mypy src/diff.py src/generate_report.py
+        run: mypy dwr_report/
 
       - name: Pytest — run tests with coverage
         run: pytest

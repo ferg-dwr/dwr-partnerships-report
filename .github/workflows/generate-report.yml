@@ -42,12 +42,12 @@ jobs:
       - name: Run diff + ID watchdog
         id: diff
         run: |
-          python src/diff.py data/previous.csv data/latest.csv reports/diff.json
+          python dwr_report/pipeline/diff.py data/previous.csv data/latest.csv reports/diff.json
         # Exit code 2 = collision warnings → blocks report publish (see diff.py)
 
       - name: Generate report
         run: |
-          python src/generate_report.py \
+          python dwr_report/pipeline/generate_report.py \
             --csv data/latest.csv \
             --diff reports/diff.json \
             --output reports/index.html

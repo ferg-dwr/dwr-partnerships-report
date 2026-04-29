@@ -9,15 +9,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.diff import (
+from dwr_report.pipeline.diff import (
     _canonical,
     _to_list_if_listlike,
     diff_csvs,
 )
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 def write_csv(tmp_path: Path, name: str, rows: list[dict]) -> Path:
@@ -223,7 +219,7 @@ class TestDiffCLI:
         import sys
 
         result = subprocess.run(
-            [sys.executable, "src/diff.py", str(old), str(new), str(out_json)],
+            [sys.executable, "dwr_report/pipeline/diff.py", str(old), str(new), str(out_json)],
             capture_output=True,
             text=True,
         )
@@ -242,7 +238,7 @@ class TestDiffCLI:
         import sys
 
         result = subprocess.run(
-            [sys.executable, "src/diff.py", str(old), str(new), str(out_json)],
+            [sys.executable, "dwr_report/pipeline/diff.py", str(old), str(new), str(out_json)],
             capture_output=True,
             text=True,
         )
