@@ -23,6 +23,10 @@ dev = [
     "pandas-stubs>=2.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dwr_report*"]   # Only package dwr_report — ignore data/, reports/, etc.
+
 # ---------------------------------------------------------------------------
 # Ruff — linting and formatting
 # ---------------------------------------------------------------------------
@@ -61,7 +65,10 @@ ignore_missing_imports = true   # Plotly/Jinja2 stubs are incomplete
 files = [
     "dwr_report/pipeline/diff.py",
     "dwr_report/pipeline/generate_report.py",
-    "dwr_report/charts/report_chart.py",
+    "dwr_report/ingest/loader.py",
+    "dwr_report/ingest/taxonomy.py",
+    "dwr_report/charts/treemaps.py",
+    "dwr_report/charts/networks.py",
 ]
 
 # ---------------------------------------------------------------------------
