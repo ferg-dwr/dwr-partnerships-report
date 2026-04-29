@@ -2,11 +2,13 @@ name: Generate Partnership Report
 
 on:
   push:
+    branches:
+      - main                  # Only publish reports from main
     paths:
-      - "data/latest.csv"   # Only runs when a new CSV is uploaded
+      - "data/latest.csv"     # Only runs when a new CSV is uploaded
 
 permissions:
-  contents: write           # Needed to commit generated reports back
+  contents: write             # Needed to commit generated reports back
   pages: write
   id-token: write
 
@@ -18,7 +20,7 @@ jobs:
       - name: Checkout repo (with full history for diff)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2    # Need current + previous commit for diff
+          fetch-depth: 2      # Need current + previous commit for diff
 
       - name: Set up Python
         uses: actions/setup-python@v5
