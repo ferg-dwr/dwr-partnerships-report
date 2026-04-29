@@ -1,0 +1,26 @@
+node_id,node_type,node_name,degree,dominant_division
+1,division,SWP – Integrated Science and Engineering,23,
+2,division,Multibenefit Initiatives,6,
+3,division,Planning,3,
+4,division,Flood Operations,11,
+5,division,DRA – Southern Region,10,
+6,division,DRA – Water Use Efficiency,10,
+7,division,Healthy Rivers and Landscapes,7,
+8,division,Sustainable Groundwater Management,6,
+9,division,DRA – North Central Region,20,
+10,division,SWP – Modeling Support,5,
+11,org,Acme Water Research Institute,7,SWP – Integrated Science and Engineering
+12,org,Blue River University,1,Multibenefit Initiatives
+13,org,Central Valley Tech,4,Flood Operations
+14,org,Delta Science Consortium,1,DRA – North Central Region
+15,org,Eastbay Environmental Group,4,DRA – North Central Region
+16,org,Freshwater Analytics LLC,7,Flood Operations
+17,org,Golden State Hydrology Center,8,SWP – Modeling Support
+18,org,Highplains Research Network,5,SWP – Integrated Science and Engineering
+19,org,Inland Watershed Lab,3,Healthy Rivers and Landscapes
+20,org,Junction Climate Institute,6,DRA – Southern Region
+21,org,Klamath River Studies Group,3,Flood Operations
+22,org,Lakeside Data Systems,6,Multibenefit Initiatives
+23,org,Mountain Hydro Solutions,2,Healthy Rivers and Landscapes
+24,org,Northcoast Ecology Partners,2,DRA – Water Use Efficiency
+25,org,Oceanic Flow Technologies,6,SWP – Modeling Support
