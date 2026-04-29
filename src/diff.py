@@ -30,6 +30,7 @@ TRACKED_FIELDS = [
     "Main DWR Point of Contact",
 ]
 
+# Fields that, if changed, indicate a possible ID collision (not just an update)
 IDENTITY_FIELDS = ["Partnership Organization Name"]
 
 
@@ -150,15 +151,18 @@ def diff_csvs(old_path: Path | str, new_path: Path | str) -> DiffResult:
 
     result = DiffResult()
 
+    # --- Load ---
     old_df = _load(old_path).set_index(ID_COL)
     new_df = _load(new_path).set_index(ID_COL)
 
     old_ids = set(old_df.index.dropna())
     new_ids = set(new_df.index.dropna())
 
+    # --- New and removed ---
     result.new_ids = sorted(new_ids - old_ids)
     result.removed_ids = sorted(old_ids - new_ids)
 
+    # --- Orphan warnings: IDs removed — could be deletion or ID change ---
     for id_ in result.removed_ids:
         result.warnings.append(
             IDWarning(
@@ -172,6 +176,7 @@ def diff_csvs(old_path: Path | str, new_path: Path | str) -> DiffResult:
             )
         )
 
+    # --- Collision warnings: shared IDs where identity fields changed dramatically ---
     shared_ids = old_ids & new_ids
     for id_ in sorted(shared_ids):
         old_row = old_df.loc[id_]
@@ -195,6 +200,7 @@ def diff_csvs(old_path: Path | str, new_path: Path | str) -> DiffResult:
                     )
                 )
 
+    # --- Field-level changes for shared IDs ---
     tracked = [f for f in TRACKED_FIELDS if f in old_df.columns and f in new_df.columns]
     for id_ in sorted(shared_ids):
         old_row = old_df.loc[id_]
@@ -246,11 +252,13 @@ if __name__ == "__main__":
         ],
         "warnings": [{"kind": w.kind, "id": w.id_, "message": w.message} for w in result.warnings],
     }
-    Path(output_json).write_text(json.dumps(out, indent=2))
+    output_path = Path(output_json)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(out, indent=2))
     print(f"\nDiff written to {output_json}")
 
     # Exit with error code if there are collision warnings — blocks report publish
     collision_warnings = [w for w in result.warnings if w.kind == "collision"]
     if collision_warnings:
-        print("\n❌ Collision warnings detected. Resolve before publishing.")
+        print("\nCollision warnings detected. Resolve before publishing.")
         sys.exit(2)
