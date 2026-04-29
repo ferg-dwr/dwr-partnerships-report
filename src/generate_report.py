@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Make sure src/ is on the path when called from repo root
@@ -26,19 +26,17 @@ def _diff_banner(diff_path: Path) -> str:
 
     diff = json.loads(diff_path.read_text())
 
-    new_count     = len(diff.get("new_ids", []))
+    new_count = len(diff.get("new_ids", []))
     removed_count = len(diff.get("removed_ids", []))
     changed_count = len(diff.get("changed_rows", []))
-    warnings      = diff.get("warnings", [])
+    warnings = diff.get("warnings", [])
 
     collision_warnings = [w for w in warnings if w["kind"] == "collision"]
-    orphan_warnings    = [w for w in warnings if w["kind"] == "orphan"]
+    orphan_warnings = [w for w in warnings if w["kind"] == "orphan"]
 
     warning_html = ""
     if collision_warnings:
-        items = "".join(
-            f"<li>ID {w['id']}: {w['message']}</li>" for w in collision_warnings
-        )
+        items = "".join(f"<li>ID {w['id']}: {w['message']}</li>" for w in collision_warnings)
         warning_html += f"""
         <div class="banner banner--error">
           <strong>⚠️ ID Collision Warnings</strong>
@@ -46,12 +44,10 @@ def _diff_banner(diff_path: Path) -> str:
         </div>"""
 
     if orphan_warnings:
-        items = "".join(
-            f"<li>ID {w['id']}: {w['message']}</li>" for w in orphan_warnings
-        )
+        items = "".join(f"<li>ID {w['id']}: {w['message']}</li>" for w in orphan_warnings)
         warning_html += f"""
         <div class="banner banner--warn">
-          <strong>ℹ️ Removed IDs (verify intentional)</strong>
+          <strong>i Removed IDs (verify intentional)</strong>
           <ul>{items}</ul>
         </div>"""
 
@@ -65,7 +61,7 @@ def _diff_banner(diff_path: Path) -> str:
             )
             rows += f"""
             <details>
-              <summary>ID {row['id']}</summary>
+              <summary>ID {row["id"]}</summary>
               <table>
                 <thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
                 <tbody>{field_rows}</tbody>
@@ -78,7 +74,7 @@ def _diff_banner(diff_path: Path) -> str:
       <h2>What changed in this upload</h2>
       <div class="diff-stats">
         <span class="stat stat--new">+{new_count} new</span>
-        <span class="stat stat--removed">−{removed_count} removed</span>
+        <span class="stat stat--removed">-{removed_count} removed</span>
         <span class="stat stat--changed">~ {changed_count} updated</span>
       </div>
       {warning_html}
@@ -100,7 +96,7 @@ def generate(csv_path: Path, diff_path: Path, output_path: Path) -> None:
     diff_banner = _diff_banner(diff_path)
 
     # Timestamp
-    generated_at = datetime.now(timezone.utc).strftime("%B %d, %Y at %H:%M UTC")
+    generated_at = datetime.now(UTC).strftime("%B %d, %Y at %H:%M UTC")
 
     # Assemble the full page
     html = f"""<!DOCTYPE html>
@@ -207,8 +203,8 @@ def generate(csv_path: Path, diff_path: Path, output_path: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv",    required=True, type=Path)
-    parser.add_argument("--diff",   required=True, type=Path)
+    parser.add_argument("--csv", required=True, type=Path)
+    parser.add_argument("--diff", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
 

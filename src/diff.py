@@ -9,13 +9,11 @@ Compares an incoming CSV against the previous latest.csv and produces:
 from __future__ import annotations
 
 import ast
-import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 ID_COL = "ID"
 
@@ -37,7 +35,7 @@ IDENTITY_FIELDS = ["Partnership Organization Name"]
 
 @dataclass
 class IDWarning:
-    kind: str          # "orphan" | "collision" | "reuse"
+    kind: str  # "orphan" | "collision" | "reuse"
     id_: int | float
     message: str
 
@@ -162,15 +160,17 @@ def diff_csvs(old_path: Path | str, new_path: Path | str) -> DiffResult:
     result.removed_ids = sorted(old_ids - new_ids)
 
     for id_ in result.removed_ids:
-        result.warnings.append(IDWarning(
-            kind="orphan",
-            id_=id_,
-            message=(
-                f"ID {id_} was present in the previous data but is missing from the upload. "
-                "This is expected if the partnership was deleted. If not intentional, "
-                "the ID may have been reassigned — check Microsoft Lists."
-            ),
-        ))
+        result.warnings.append(
+            IDWarning(
+                kind="orphan",
+                id_=id_,
+                message=(
+                    f"ID {id_} was present in the previous data but is missing from the upload. "
+                    "This is expected if the partnership was deleted. If not intentional, "
+                    "the ID may have been reassigned — check Microsoft Lists."
+                ),
+            )
+        )
 
     shared_ids = old_ids & new_ids
     for id_ in sorted(shared_ids):
@@ -183,15 +183,17 @@ def diff_csvs(old_path: Path | str, new_path: Path | str) -> DiffResult:
             old_val = _canonical(old_row.get(identity_field, ""))
             new_val = _canonical(new_row.get(identity_field, ""))
             if old_val and new_val and old_val != new_val:
-                result.warnings.append(IDWarning(
-                    kind="collision",
-                    id_=id_,
-                    message=(
-                        f"Identity field '{identity_field}' changed from "
-                        f"'{old_val}' → '{new_val}'. "
-                        "Possible ID reuse or collision — verify this is an intentional rename."
-                    ),
-                ))
+                result.warnings.append(
+                    IDWarning(
+                        kind="collision",
+                        id_=id_,
+                        message=(
+                            f"Identity field '{identity_field}' changed from "
+                            f"'{old_val}' → '{new_val}'. "
+                            "Possible ID reuse or collision — verify this is an intentional rename."
+                        ),
+                    )
+                )
 
     tracked = [f for f in TRACKED_FIELDS if f in old_df.columns and f in new_df.columns]
     for id_ in sorted(shared_ids):
@@ -202,19 +204,22 @@ def diff_csvs(old_path: Path | str, new_path: Path | str) -> DiffResult:
             old_val = _canonical(old_row.get(col, ""))
             new_val = _canonical(new_row.get(col, ""))
             if old_val != new_val:
-                changes.append(FieldChange(
-                    field=col,
-                    old_value=_to_list_if_listlike(old_row.get(col, "")),
-                    new_value=_to_list_if_listlike(new_row.get(col, "")),
-                ))
+                changes.append(
+                    FieldChange(
+                        field=col,
+                        old_value=_to_list_if_listlike(old_row.get(col, "")),
+                        new_value=_to_list_if_listlike(new_row.get(col, "")),
+                    )
+                )
         if changes:
             result.changed_rows.append(ChangedRow(id_=id_, changes=changes))
 
     return result
 
+
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     if len(sys.argv) != 4:
         print("Usage: python diff.py <old_csv> <new_csv> <output_json>")
@@ -239,10 +244,7 @@ if __name__ == "__main__":
             }
             for r in result.changed_rows
         ],
-        "warnings": [
-            {"kind": w.kind, "id": w.id_, "message": w.message}
-            for w in result.warnings
-        ],
+        "warnings": [{"kind": w.kind, "id": w.id_, "message": w.message} for w in result.warnings],
     }
     Path(output_json).write_text(json.dumps(out, indent=2))
     print(f"\nDiff written to {output_json}")
