@@ -12,6 +12,9 @@ permissions:
   id-token: write
   issues: write              # Needed to create changelog issues
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   generate-report:
     runs-on: ubuntu-latest
