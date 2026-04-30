@@ -353,6 +353,13 @@ function toggleEdgeDetail(rowId) {
     // Reserved for future third-level expansion if needed
 }
 
+// Global state — accessible from event handlers outside initNetwork
+var network     = null;
+var layoutReady = false;
+var activeNode  = null;
+var activeEdge  = null;
+var hoveredNode = null;
+
 function initNetwork() {
 
 // ── Data injected by Python ─────────────────────────────────────────────
@@ -371,10 +378,10 @@ var BASE_SIZE         = 14;
 var TOP_DIV_N         = 5;   // always-labeled top divisions
 
 // ── State ─────────────────────────────────────────────────────────────────
-var activeNode  = null;
-var activeEdge  = null;
-var hoveredNode = null;
-var layoutReady = false;
+activeNode  = null;
+activeEdge  = null;
+hoveredNode = null;
+layoutReady = false;
 
 // ── Degree computation ────────────────────────────────────────────────────
 var nodeDegree = {};
@@ -410,7 +417,7 @@ function nodeSize(id) {
 var container = document.getElementById("network-container");
 var visNodes  = new vis.DataSet(nodesData);
 var visEdges  = new vis.DataSet(edgesData);
-var network   = new vis.Network(
+network   = new vis.Network(
     container,
     { nodes: visNodes, edges: visEdges },
     {
@@ -593,9 +600,21 @@ function typeLabel(id) {
 function buildSummary(nodeId, pinned) {
     var neighbors = adjacency[nodeId] || [];
     var meta      = nodeMeta[nodeId]  || {};
-    var html      = '<div class="s-title">' + nodeId + '</div>';
-    html         += '<span class="s-type">' + typeLabel(nodeId) + '</span>';
-    html         += '<span class="s-degree">' + (nodeDegree[nodeId]||0) + ' connections</span>';
+    var meta2     = nodeMeta[nodeId] || {};
+    var nodeColor = meta2.color || "#aaa";
+    var isDivision = meta2.type === "division";
+    var dotShape  = isDivision
+        ? '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + nodeColor + ';margin-right:6px;flex-shrink:0;"></span>'
+        : '<span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:' + nodeColor + ';margin-right:6px;flex-shrink:0;"></span>';
+
+    var html = '<div style="display:flex;align-items:center;gap:0;padding:10px 12px;' +
+               'border-radius:6px;border:1.5px solid ' + nodeColor + ';' +
+               'background:' + nodeColor + '18;margin-bottom:10px;">' +
+               dotShape +
+               '<div><div class="s-title" style="margin:0;">' + nodeId + '</div>' +
+               '<div class="s-type">' + typeLabel(nodeId) + '</div></div></div>';
+        var degCount = nodeDegree[nodeId] || 0;
+    html         += '<span class="s-degree">' + degCount + ' connection' + (degCount !== 1 ? 's' : '') + '</span>';
 
     if (meta.type === "division") {
         var orgsW = neighbors.map(function(o) {
