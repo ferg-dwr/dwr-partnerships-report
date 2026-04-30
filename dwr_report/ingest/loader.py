@@ -24,10 +24,8 @@ LIST_LIKE_COLUMNS = [
     "Science and Technology Fields",
 ]
 
-# TODO: Verify whether "DWR Division/ Office/ Branch" should be included in
-# LIST_LIKE_COLUMNS. network_bipartite() currently calls _to_list_if_listlike()
-# on this column, suggesting it may contain list-like values in some exports.
-# If so, add it here so it is normalized at load time rather than per-chart.
+# NOTE: "DWR Division/ Office/ Branch" is intentionally excluded from
+# LIST_LIKE_COLUMNS — confirmed to be a plain string in Microsoft Lists exports.
 
 
 def normalize_colname(col: str) -> str:
