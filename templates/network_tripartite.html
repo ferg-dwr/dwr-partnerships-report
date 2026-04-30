@@ -50,12 +50,15 @@
 
   /* ── Column headers ── */
   .col-header {
-    position: fixed; top: 12px;
-    background: rgba(255,255,255,0.92);
-    border: 1px solid #ddd; border-radius: 6px;
-    padding: 4px 14px; font-size: 12px; font-weight: bold;
-    color: #333; z-index: 998; letter-spacing: 0.03em;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    position: fixed; top: 0px;
+    background: #003366;
+    border: none;
+    border-bottom: 3px solid #C8960C;
+    padding: 6px 16px;
+    font-size: 11px; font-weight: 700;
+    color: white; z-index: 998;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     transform: translateX(-50%);
   }
 
@@ -120,15 +123,34 @@
 <div id="network-container"></div>
 <div id="label-layer"></div>
 
-<!-- Column headers — positioned dynamically by JS -->
-<div id="col-field"    class="col-header">Science Fields</div>
-<div id="col-staff"    class="col-header">Staff</div>
-<div id="col-division" class="col-header">Divisions</div>
-
 <!-- Legend -->
 <div id="legend">
-  <b style="font-size:13px;">Science Field ↔ Staff ↔ Division Network</b><br><br>
-  <b>Science Categories</b>
+  <b style="font-size:13px;color:#003366;">Science Field ↔ Staff ↔ Division, Office, or Branch</b><br><br>
+  <!-- Column key diagram -->
+  <div style="display:flex; gap:4px; margin-bottom:12px; font-size:10px; align-items:center;">
+    <div style="text-align:center; flex:1;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#1E88E5;margin:0 auto 2px;"></div>
+      <div style="color:#555; font-weight:600;">Science</div>
+      <div style="color:#555; font-weight:600;">Fields</div>
+      <div style="color:#aaa;">(left)</div>
+    </div>
+    <div style="color:#ccc; font-size:14px; padding-bottom:12px;">↔</div>
+    <div style="text-align:center; flex:1;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#81C784;margin:0 auto 2px;"></div>
+      <div style="color:#555; font-weight:600;">DWR</div>
+      <div style="color:#555; font-weight:600;">Staff</div>
+      <div style="color:#aaa;">(center)</div>
+    </div>
+    <div style="color:#ccc; font-size:14px; padding-bottom:12px;">↔</div>
+    <div style="text-align:center; flex:1;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#FFB74D;margin:0 auto 2px;"></div>
+      <div style="color:#555; font-weight:600;">Div/Office</div>
+      <div style="color:#555; font-weight:600;">/Branch</div>
+      <div style="color:#aaa;">(right)</div>
+    </div>
+  </div>
+  <hr style="border:none;border-top:1px solid #eee;margin:0 0 10px;">
+  <b style="color:#003366;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Science Categories</b>
   
   <div>
     <span style="color:#1E88E5;font-size:15px;">●</span>
@@ -193,9 +215,9 @@ var divisionIds   = {{ divisions_json | tojson }};
 var GLOW        = "#FFD700";
 var DIM         = "#e8e8e8";
 var DOT_SIZE    = 14;
-var X_FIELD     = -700;
+var X_FIELD     = -900;
 var X_STAFF     = 0;
-var X_DIVISION  = 700;
+var X_DIVISION  = 900;
 
 // ── State ─────────────────────────────────────────────────────────────────
 var activeNode  = null;
@@ -272,15 +294,14 @@ network.once("afterDrawing", function() {
     network.fit({ animation: { duration: 600, easingFunction: "easeInOutQuad" } });
     buildLabelLayer();
     positionLabels();
-    positionColumnHeaders();
     buildSparkSections();
     restoreDefault();
     updateLabelStyles();   // ← add this line
 });
 
 network.on("afterDrawing", function() { positionLabels(); });
-network.on("zoom",         function() { positionColumnHeaders(); updateLabelStyles(); });
-network.on("dragEnd",      function() { positionColumnHeaders(); });
+network.on("zoom",         function() { updateLabelStyles(); });
+
 
 // ── HTML label layer ──────────────────────────────────────────────────────
 var labelLayer = document.getElementById("label-layer");
@@ -292,7 +313,19 @@ function buildLabelLayer() {
     nodesData.forEach(function(n) {
         var el            = document.createElement("div");
         el.className      = "node-label";
-        el.textContent    = n.id;
+        el.textContent    = (function(name) {
+            // Format: "Last, F." for staff nodes, full name for others
+            if (n.group === "staff") {
+                var parts = name.split(",");
+                if (parts.length >= 2) {
+                    var last  = parts[0].trim();
+                    var first = parts[1].trim().replace(/@.*/, "");
+                    return last + ", " + (first[0] || "") + ".";
+                }
+                return name.replace(/@.*/, "");
+            }
+            return name;
+        })(n.id);
         el.dataset.nodeId = n.id;
         labelLayer.appendChild(el);
         labelEls[n.id] = el;
@@ -371,16 +404,6 @@ function highlightLabels(highlightSet) {
 function restoreLabelStyles() {
     var scale = network.getScale ? network.getScale() : 1;
     applyDefaultLabelStyles(scale);
-}
-
-// ── Column header positioning ─────────────────────────────────────────────
-function positionColumnHeaders() {
-    var xF = network.canvasToDOM({ x: X_FIELD,    y: 0 }).x;
-    var xS = network.canvasToDOM({ x: X_STAFF,    y: 0 }).x;
-    var xD = network.canvasToDOM({ x: X_DIVISION, y: 0 }).x;
-    document.getElementById("col-field").style.left    = xF + "px";
-    document.getElementById("col-staff").style.left    = xS + "px";
-    document.getElementById("col-division").style.left = xD + "px";
 }
 
 // ── Spark chart builder ───────────────────────────────────────────────────

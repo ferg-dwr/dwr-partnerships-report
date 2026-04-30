@@ -86,7 +86,7 @@ def _load_template(template_path: Path) -> Any:
 def network_tripartite(
     data: PartnershipData,
     template_path: str | Path = "templates/network_tripartite.html",
-    title: str = "Science Field <-> Staff <-> Division Network",
+    title: str = "Organizational Network: Science, Staff, and Structure",
 ) -> str:
     """
     Generate an interactive tripartite network graph.
@@ -143,7 +143,7 @@ def network_tripartite(
     staff = sorted(df[staff_col].unique().tolist())
 
     CANVAS_HEIGHT = 4000
-    X_FIELD, X_STAFF, X_DIVISION = -700, 0, 700
+    X_FIELD, X_STAFF, X_DIVISION = -900, 0, 900
     PADDING, GROUP_GAP, DOT_SIZE = 60, 80, 14
     STAFF_COLOR = "#81C784"
     DIVISION_COLOR = "#FFB74D"
@@ -303,7 +303,7 @@ def network_tripartite(
 def network_bipartite(
     data: PartnershipData,
     template_path: str | Path = "templates/network_bipartite.html",
-    title: str = "DWR Division <-> Partner Organization Network",
+    title: str = "Organizational Network: DWR and Its Partners",
 ) -> str:
     """
     Generate an interactive bipartite network graph:
