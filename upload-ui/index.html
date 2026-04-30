@@ -202,7 +202,7 @@
     <p class="hint">Your token is never stored — it's used only for this upload.</p>
 
     <label for="repoInput">Repository (org/repo)</label>
-    <input type="text" id="repoInput" placeholder="your-org/dwr-partnerships-report" value="">
+    <input type="text" id="repoInput" placeholder="your-org/dwr-partnerships-report" value="ferg-dwr/dwr-partnerships-report">
   </div>
 
   <button id="uploadBtn" disabled>Upload & Generate Report</button>
@@ -283,7 +283,13 @@
     if (!selectedFile) return;
 
     const token = tokenInput.value.trim();
-    const repo  = repoInput.value.trim();
+    const rawRepo = repoInput.value.trim();
+    // Normalize: accept full GitHub URLs or just owner/repo
+    const repo = rawRepo
+      .replace(/^https?:\/\/(www\.)?github\.com\//, "")
+      .replace(/^https?:\/\/[^/]+\.github\.io\/([^/]+).*$/, "ferg-dwr/$1")
+      .replace(/\/+$/, "")
+      .trim();
     const path  = "data/latest.csv";
     const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
 
