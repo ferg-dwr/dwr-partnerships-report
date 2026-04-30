@@ -105,6 +105,7 @@ def make_minimal_bipartite_template(tmp_path: Path) -> Path:
 class TestVisJsCdn:
     def test_cdn_url_is_set(self):
         from dwr_report.charts.networks import _VIS_JS_CDN
+
         assert _VIS_JS_CDN.startswith("https://cdn.jsdelivr.net")
         assert "vis-network" in _VIS_JS_CDN
 
