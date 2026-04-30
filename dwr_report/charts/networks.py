@@ -102,15 +102,10 @@ def network_tripartite(
 
     df = data.df[[staff_col, division_col, fields_col, category_col]].copy()
     df[fields_col] = df[fields_col].map(to_list_if_listlike)
-    df[division_col] = df[division_col].map(to_list_if_listlike)
     df[category_col] = df[category_col].map(to_list_if_listlike)
+    # division_col is a plain string in Microsoft Lists exports — no explosion needed
 
-    # TODO: Verify whether "DWR Division/ Office/ Branch" values are truly
-    # list-like in all CSV exports. If this column is always a plain string,
-    # the explode() below is a no-op but the to_list_if_listlike() call above
-    # may produce unexpected single-item lists. Audit with a real export.
-
-    df = df.explode(fields_col).explode(division_col).explode(category_col)
+    df = df.explode(fields_col).explode(category_col)
     df = df.dropna(subset=[staff_col, division_col, fields_col, category_col])
     df = df.apply(lambda col: col.str.strip() if col.dtype == "object" else col)
 
@@ -271,7 +266,7 @@ def network_tripartite(
     template = _load_template(Path(template_path))
     return str(
         template.render(
-            vis_js_cdn=_VIS_JS_CDN,
+            vis_js="",
             title=title,
             nodes_json=json.dumps(nodes),
             edges_json=json.dumps(edges),
@@ -315,16 +310,11 @@ def network_bipartite(
     org_type_col = "Organization Type"
 
     df = data.df[[division_col, org_col, org_type_col]].copy()
-    df[division_col] = df[division_col].map(to_list_if_listlike)
     df[org_col] = df[org_col].map(to_list_if_listlike)
     df[org_type_col] = df[org_type_col].map(to_list_if_listlike)
+    # division_col is a plain string in Microsoft Lists exports — no explosion needed
 
-    # TODO: Verify whether "DWR Division/ Office/ Branch" values are truly
-    # list-like in all CSV exports. If this column is always a plain string,
-    # the explode() below is a no-op but the to_list_if_listlike() call above
-    # may produce unexpected single-item lists. Audit with a real export.
-
-    df = df.explode(division_col).explode(org_col).explode(org_type_col)
+    df = df.explode(org_col).explode(org_type_col)
     df = df.dropna(subset=[division_col, org_col])
     df = df.apply(lambda col: col.str.strip() if col.dtype == "object" else col)
 
@@ -424,10 +414,34 @@ def network_bipartite(
         org_color = org_type_colors.get(org_type, "#90A4AE")
         node_meta[org] = {"type": "org", "color": org_color, "orgType": org_type}
 
+    # --- Top organizations summary (static, generated at report time) ---
+    # Top partner orgs by number of DWR division connections
+    org_degree = edge_weights.groupby(org_col)["weight"].sum().sort_values(ascending=False)
+    top_orgs = [
+        {"name": org, "connections": int(org_degree[org])} for org in org_degree.head(5).index
+    ]
+
+    # Top DWR divisions by number of partner organizations
+    div_degree = edge_weights.groupby(division_col)["weight"].sum().sort_values(ascending=False)
+    top_divisions = [
+        {"name": div, "connections": int(div_degree[div])} for div in div_degree.head(5).index
+    ]
+
+    # --- Top organizations summary (static, generated at report time) ---
+    org_degree = edge_weights.groupby(org_col)["weight"].sum().sort_values(ascending=False)
+    top_orgs = [
+        {"name": org, "connections": int(org_degree[org])} for org in org_degree.head(5).index
+    ]
+
+    div_degree = edge_weights.groupby(division_col)["weight"].sum().sort_values(ascending=False)
+    top_divisions = [
+        {"name": div, "connections": int(div_degree[div])} for div in div_degree.head(5).index
+    ]
+
     template = _load_template(Path(template_path))
     return str(
         template.render(
-            vis_js_cdn=_VIS_JS_CDN,
+            vis_js="",
             title=title,
             nodes_json=json.dumps(nodes),
             edges_json=json.dumps(edges),
@@ -440,6 +454,8 @@ def network_bipartite(
             glow_color=GLOW_COLOR,
             dim_color=DIM_COLOR,
             dot_size=DOT_SIZE,
+            top_orgs_json=json.dumps(top_orgs),
+            top_divisions_json=json.dumps(top_divisions),
         )
     )
 

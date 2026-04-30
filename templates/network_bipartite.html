@@ -125,6 +125,37 @@
   <span style="font-size:10px;color:#888;">Edge width = # partnerships · Drag nodes freely</span>
   <br><br>
 
+  <!-- Summary panel — populated from static data injected at report time -->
+  <div id="summary-panel" style="
+    background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px;
+    padding:10px 12px; margin-bottom:12px; font-size:11px;">
+
+    <b style="font-size:12px; color:#084594;">Top Partner Organizations</b>
+    <div id="top-orgs-list" style="margin:6px 0 10px;">
+      {% for org in top_orgs %}
+      <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
+        <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              title="{{ org.name }}">{{ org.name }}</span>
+        <span style="color:#6BAED6; font-weight:600; margin-left:8px;">{{ org.connections }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <b style="font-size:12px; color:#084594;">Top DWR Divisions</b>
+    <div id="top-divisions-list" style="margin:6px 0 0;">
+      {% for div in top_divisions %}
+      <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
+        <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              title="{{ div.name }}">{{ div.name }}</span>
+        <span style="color:#FFB74D; font-weight:600; margin-left:8px;">{{ div.connections }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="color:#aaa; font-size:10px; margin-top:6px;">partnerships counted</div>
+  </div>
+
+  <br>
+
   <b>Organization Type</b>
   
   <div>
