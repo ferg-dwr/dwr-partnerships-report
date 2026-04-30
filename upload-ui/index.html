@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Partnership Data — DWR</title>
+  <style>
+    :root {
+      --blue-dark:  #084594;
+      --blue-mid:   #6BAED6;
+      --blue-light: #DEEBF7;
+      --green:      #2e7d32;
+      --red:        #c62828;
+      --grey-light: #f5f5f5;
+      --grey-border: #ddd;
+      --text:       #1a1a1a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--grey-light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 2rem;
+      color: var(--text);
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      padding: 2.5rem 3rem;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      color: var(--blue-dark);
+      font-size: 1.4rem;
+      margin: 0 0 0.4rem;
+    }
+
+    .subtitle {
+      color: #555;
+      font-size: 0.9rem;
+      margin: 0 0 2rem;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2.5px dashed var(--blue-mid);
+      border-radius: 8px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      background: var(--blue-light);
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      background: #c6dcf0;
+      border-color: var(--blue-dark);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .drop-label { font-size: 1rem; color: var(--blue-dark); font-weight: 600; }
+    .drop-hint  { font-size: 0.8rem; color: #666; margin-top: 0.25rem; }
+
+    /* Selected file preview */
+    .file-preview {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f0f7ff;
+      border: 1px solid var(--blue-mid);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    .file-preview.visible { display: flex; }
+    .file-icon { font-size: 1.5rem; }
+    .file-name { font-weight: 600; flex: 1; word-break: break-all; }
+    .file-size { color: #666; white-space: nowrap; }
+
+    /* Config fields */
+    .config { margin-top: 1.5rem; }
+    .config label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: #333;
+    }
+    .config input {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--grey-border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .config input:focus {
+      outline: none;
+      border-color: var(--blue-mid);
+      box-shadow: 0 0 0 3px rgba(107,174,214,0.25);
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: -0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Upload button */
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--blue-dark);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.15s;
+    }
+    button:hover:not(:disabled) { background: #0a5cbf; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+
+    /* Status messages */
+    .status {
+      display: none;
+      margin-top: 1.25rem;
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .status.visible { display: block; }
+    .status.info    { background: var(--blue-light); color: var(--blue-dark); }
+    .status.success { background: #c8e6c9; color: var(--green); }
+    .status.error   { background: #ffcdd2; color: var(--red); }
+
+    .progress {
+      height: 4px;
+      background: var(--grey-border);
+      border-radius: 2px;
+      margin-top: 0.75rem;
+      overflow: hidden;
+      display: none;
+    }
+    .progress.visible { display: block; }
+    .progress-bar {
+      height: 100%;
+      background: var(--blue-mid);
+      width: 0%;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Upload Partnership Data</h1>
+  <p class="subtitle">
+    Drop your CSV export from Microsoft Lists below.
+    A new report will generate automatically.
+  </p>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".csv">
+    <div class="drop-icon">📂</div>
+    <div class="drop-label">Drag &amp; drop your CSV here</div>
+    <div class="drop-hint">or click to browse</div>
+  </div>
+
+  <div class="file-preview" id="filePreview">
+    <span class="file-icon">📄</span>
+    <span class="file-name" id="fileName">—</span>
+    <span class="file-size" id="fileSize">—</span>
+  </div>
+
+  <div class="config">
+    <label for="tokenInput">GitHub Personal Access Token</label>
+    <input type="password" id="tokenInput" placeholder="github_pat_...">
+    <p class="hint">Your token is never stored — it's used only for this upload.</p>
+
+    <label for="repoInput">Repository (org/repo)</label>
+    <input type="text" id="repoInput" placeholder="your-org/dwr-partnerships-report" value="">
+  </div>
+
+  <button id="uploadBtn" disabled>Upload & Generate Report</button>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+  const dropZone    = document.getElementById("dropZone");
+  const fileInput   = document.getElementById("fileInput");
+  const filePreview = document.getElementById("filePreview");
+  const fileName    = document.getElementById("fileName");
+  const fileSize    = document.getElementById("fileSize");
+  const tokenInput  = document.getElementById("tokenInput");
+  const repoInput   = document.getElementById("repoInput");
+  const uploadBtn   = document.getElementById("uploadBtn");
+  const status      = document.getElementById("status");
+  const progress    = document.getElementById("progress");
+  const progressBar = document.getElementById("progressBar");
+
+  let selectedFile = null;
+
+  // ── Drag and drop events ──────────────────────────────────────────────────
+
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("dragover");
+  });
+
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("dragover");
+  });
+
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.name.endsWith(".csv")) {
+      showStatus("Only .csv files are accepted.", "error");
+      return;
+    }
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatSize(file.size);
+    filePreview.classList.add("visible");
+    checkReady();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  // ── Enable upload button when ready ──────────────────────────────────────
+
+  [tokenInput, repoInput].forEach(el => el.addEventListener("input", checkReady));
+
+  function checkReady() {
+    uploadBtn.disabled = !(selectedFile && tokenInput.value.trim() && repoInput.value.trim());
+  }
+
+  // ── Upload via GitHub Contents API ───────────────────────────────────────
+
+  uploadBtn.addEventListener("click", async () => {
+    if (!selectedFile) return;
+
+    const token = tokenInput.value.trim();
+    const repo  = repoInput.value.trim();
+    const path  = "data/latest.csv";
+    const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+    uploadBtn.disabled = true;
+    progress.classList.add("visible");
+    setProgress(10);
+    showStatus("Reading file…", "info");
+
+    try {
+      // 1. Read file as base64
+      const base64Content = await readFileAsBase64(selectedFile);
+      setProgress(30);
+
+      // 2. Get current file SHA (needed to overwrite)
+      showStatus("Checking current file…", "info");
+      let sha = null;
+      const getRes = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
+      });
+      if (getRes.ok) {
+        const current = await getRes.json();
+        sha = current.sha;
+      } else if (getRes.status !== 404) {
+        throw new Error(`GitHub API error: ${getRes.status} ${getRes.statusText}`);
+      }
+      setProgress(50);
+
+      // 3. Commit the new file
+      showStatus("Uploading to GitHub…", "info");
+      const commitBody = {
+        message: `data: upload new partnerships CSV (${new Date().toISOString().slice(0,10)})`,
+        content: base64Content,
+        ...(sha ? { sha } : {}),
+      };
+
+      const putRes = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(commitBody),
+      });
+
+      if (!putRes.ok) {
+        const err = await putRes.json();
+        throw new Error(err.message || `Upload failed: ${putRes.status}`);
+      }
+
+      setProgress(100);
+      showStatus(
+        `Uploaded successfully! GitHub Actions is now generating your report.<br>
+         Check the <a href="https://github.com/${repo}/actions" target="_blank">Actions tab</a>
+         for progress, or visit your
+         <a href="https://github.com/${repo.split('/')[0]}.github.io/${repo.split('/')[1]}/" target="_blank">
+         report page</a> in a few minutes.`,
+        "success"
+      );
+
+    } catch (err) {
+      setProgress(0);
+      showStatus(`${err.message}`, "error");
+      uploadBtn.disabled = false;
+    }
+  });
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setProgress(pct) {
+    progressBar.style.width = pct + "%";
+  }
+
+  function showStatus(msg, type) {
+    status.innerHTML = msg;
+    status.className = `status visible ${type}`;
+  }
+</script>
+</body>
+</html>

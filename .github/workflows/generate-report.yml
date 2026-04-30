@@ -52,6 +52,9 @@ jobs:
             --output reports/index.html \
             --taxonomy data/dwr_custom_taxonomy.csv
 
+      - name: Copy upload UI into Pages artifact
+        run: cp -r upload-ui reports/upload-ui
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
