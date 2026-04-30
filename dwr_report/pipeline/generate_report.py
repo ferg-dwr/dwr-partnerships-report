@@ -246,10 +246,32 @@ def _assemble_html(
       border-bottom: 3px solid var(--blue-dark);
       margin-bottom: 2rem;
       padding-bottom: 1rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
     }}
 
+    .header-left {{ flex: 1; }}
     h1 {{ color: var(--blue-dark); margin: 0 0 0.25rem; }}
     .generated-at {{ color: #666; font-size: 0.875rem; }}
+
+    .btn-update {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      background: var(--blue-dark);
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }}
+    .btn-update:hover {{ background: #0a5cbf; }}
 
     nav {{
       display: flex;
@@ -353,8 +375,11 @@ def _assemble_html(
 </head>
 <body>
   <header>
-    <h1>DWR Partnerships Report</h1>
-    <p class="generated-at">Generated {generated_at}</p>
+    <div class="header-left">
+      <h1>DWR Partnerships Report</h1>
+      <p class="generated-at">Generated {generated_at}</p>
+    </div>
+    <a href="upload-ui/" class="btn-update">⬆ Update Data</a>
   </header>
 
   <nav>
@@ -384,8 +409,8 @@ def _assemble_html(
       a DWR point of contact (center), or a division/office/branch (right). An edge
       indicates that a staff member is the point of contact for a partnership in that
       science field. <strong>Click any node</strong> to highlight its connections.
-      Note: this figure reflects only partnerships where a staff member is listed as
-      the primary point of contact — it does not capture all staff engagement.
+      <em><strong>Note:</strong> this figure reflects only partnerships where a staff member is listed as
+      the primary point of contact — it does not capture all staff engagement.</em>
     </p>
     {iframes["network_tripartite"]}
   </div>

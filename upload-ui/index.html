@@ -177,6 +177,11 @@
 </head>
 <body>
 <div class="card">
+  <div style="margin-bottom:1rem;">
+    <a href="../" style="font-size:0.8rem; color:#6BAED6; text-decoration:none;">
+      ← Back to report
+    </a>
+  </div>
   <h1>Upload Partnership Data</h1>
   <p class="subtitle">
     Drop your CSV export from Microsoft Lists below.
@@ -342,7 +347,7 @@
 
       setProgress(100);
       showStatus(
-        `Uploaded successfully! GitHub Actions is now generating your report.<br>
+        `✅ Uploaded successfully! GitHub Actions is now generating your report.<br>
          Check the <a href="https://github.com/${repo}/actions" target="_blank">Actions tab</a>
          for progress, or visit your
          <a href="https://github.com/${repo.split('/')[0]}.github.io/${repo.split('/')[1]}/" target="_blank">
@@ -352,7 +357,7 @@
 
     } catch (err) {
       setProgress(0);
-      showStatus(`${err.message}`, "error");
+      showStatus(`❌ ${err.message}`, "error");
       uploadBtn.disabled = false;
     }
   });
