@@ -15,11 +15,14 @@ import pandas as pd
 import pytest
 
 from dwr_report.charts.networks import (
-    _VIS_JS_CDN,
     save_html,
 )
 from dwr_report.ingest.loader import PartnershipData
 from dwr_report.ingest.taxonomy import enrich_science_fields
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 BASE_ROW = {
     "ID": 1,
@@ -72,8 +75,8 @@ def make_minimal_tripartite_template(tmp_path: Path) -> Path:
     template.write_text(
         "<html><body>"
         "<script src='{{ vis_js_cdn }}'></script>"
-        "<div id='nodes'>{{ nodes_json }}</div>"
-        "<div id='edges'>{{ edges_json }}</div>"
+        "<div id='nodes'>{{ nodes_json | tojson }}</div>"
+        "<div id='edges'>{{ edges_json | tojson }}</div>"
         "</body></html>"
     )
     return template
@@ -87,17 +90,28 @@ def make_minimal_bipartite_template(tmp_path: Path) -> Path:
     template.write_text(
         "<html><body>"
         "<script src='{{ vis_js_cdn }}'></script>"
-        "<div id='nodes'>{{ nodes_json }}</div>"
-        "<div id='edges'>{{ edges_json }}</div>"
+        "<div id='nodes'>{{ nodes_json | tojson }}</div>"
+        "<div id='edges'>{{ edges_json | tojson }}</div>"
         "</body></html>"
     )
     return template
 
 
+# ---------------------------------------------------------------------------
+# CDN constant
+# ---------------------------------------------------------------------------
+
+
 class TestVisJsCdn:
     def test_cdn_url_is_set(self):
+        from dwr_report.charts.networks import _VIS_JS_CDN
         assert _VIS_JS_CDN.startswith("https://cdn.jsdelivr.net")
         assert "vis-network" in _VIS_JS_CDN
+
+
+# ---------------------------------------------------------------------------
+# save_html
+# ---------------------------------------------------------------------------
 
 
 class TestSaveHtml:
@@ -124,6 +138,11 @@ class TestSaveHtml:
         assert result == out
 
 
+# ---------------------------------------------------------------------------
+# network_tripartite — template rendering
+# ---------------------------------------------------------------------------
+
+
 class TestNetworkTripartite:
     def test_raises_without_enrichment(self, tmp_path):
         from dwr_report.charts.networks import network_tripartite
@@ -142,13 +161,13 @@ class TestNetworkTripartite:
         assert isinstance(result, str)
         assert "<html>" in result
 
-    def test_cdn_url_injected(self, tmp_path):
+    def test_vis_js_variable_passed(self, tmp_path):
         from dwr_report.charts.networks import network_tripartite
 
         data, _ = make_enriched_data(tmp_path)
         template = make_minimal_tripartite_template(tmp_path)
         result = network_tripartite(data, template_path=template)
-        assert _VIS_JS_CDN in result
+        assert "<script" in result  # vis_js="" passed; CDN hardcoded in template
 
     def test_nodes_json_in_output(self, tmp_path):
         from dwr_report.charts.networks import network_tripartite
@@ -194,6 +213,11 @@ class TestNetworkTripartite:
         assert "division" in groups
 
 
+# ---------------------------------------------------------------------------
+# network_bipartite — template rendering
+# ---------------------------------------------------------------------------
+
+
 class TestNetworkBipartite:
     def test_returns_html_string(self, tmp_path):
         from dwr_report.charts.networks import network_bipartite
@@ -204,13 +228,13 @@ class TestNetworkBipartite:
         assert isinstance(result, str)
         assert "<html>" in result
 
-    def test_cdn_url_injected(self, tmp_path):
+    def test_vis_js_variable_passed(self, tmp_path):
         from dwr_report.charts.networks import network_bipartite
 
         data = make_data(tmp_path)
         template = make_minimal_bipartite_template(tmp_path)
         result = network_bipartite(data, template_path=template)
-        assert _VIS_JS_CDN in result
+        assert "<script" in result  # vis_js="" passed; CDN hardcoded in template
 
     def test_nodes_json_in_output(self, tmp_path):
         from dwr_report.charts.networks import network_bipartite

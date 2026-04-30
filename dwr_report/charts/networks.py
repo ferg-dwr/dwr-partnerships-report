@@ -21,6 +21,9 @@ from dwr_report.ingest.loader import PartnershipData, to_list_if_listlike
 # vis-network CDN reference injected into templates as {{ vis_js_cdn }}
 _VIS_JS_CDN = "https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"
 
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
 
 _CATEGORY_PALETTE = [
     "#1E88E5",
@@ -73,6 +76,11 @@ _FALLBACK_COLORS = ["#78909C", "#A1887F", "#4DD0E1", "#DCE775", "#FFD54F"]
 def _load_template(template_path: Path) -> Any:
     env = Environment(loader=FileSystemLoader(str(template_path.parent)))
     return env.get_template(template_path.name)
+
+
+# ---------------------------------------------------------------------------
+# Tripartite network: Science Field <-> Staff <-> Division
+# ---------------------------------------------------------------------------
 
 
 def network_tripartite(
@@ -268,11 +276,11 @@ def network_tripartite(
         template.render(
             vis_js_cdn=_VIS_JS_CDN,
             title=title,
-            nodes_json=json.dumps(nodes),
-            edges_json=json.dumps(edges),
-            adjacency_json=json.dumps(adjacency),
-            node_meta_json=json.dumps(node_meta),
-            divisions_json=json.dumps(divisions),
+            nodes_json=nodes,
+            edges_json=edges,
+            adjacency_json=adjacency,
+            node_meta_json=node_meta,
+            divisions_json=divisions,
             category_colors=category_colors,
             categories=categories,
             staff_color=STAFF_COLOR,
@@ -285,6 +293,11 @@ def network_tripartite(
             x_division=X_DIVISION,
         )
     )
+
+
+# ---------------------------------------------------------------------------
+# Bipartite network: Division <-> Partner Organization
+# ---------------------------------------------------------------------------
 
 
 def network_bipartite(
@@ -506,27 +519,32 @@ def network_bipartite(
         template.render(
             vis_js_cdn=_VIS_JS_CDN,
             title=title,
-            nodes_json=json.dumps(nodes),
-            edges_json=json.dumps(edges),
-            adjacency_json=json.dumps(adjacency),
-            edge_index_json=json.dumps(edge_index),
-            node_meta_json=json.dumps(node_meta),
-            division_ids_json=json.dumps(divisions),
+            nodes_json=nodes,
+            edges_json=edges,
+            adjacency_json=adjacency,
+            edge_index_json=edge_index,
+            node_meta_json=node_meta,
+            division_ids_json=divisions,
             org_type_colors=org_type_colors,
-            org_type_colors_json=json.dumps(org_type_colors),
+            org_type_colors_json=org_type_colors,
             glow_color=GLOW_COLOR,
             dim_color=DIM_COLOR,
             dot_size_min=DOT_SIZE_MIN,
             dot_size_max=DOT_SIZE_MAX,
             max_degree=max_degree,
-            top_orgs_json=json.dumps(top_orgs),
-            top_divisions_json=json.dumps(top_divisions),
-            partnership_details_json=json.dumps(partnership_details),
+            top_orgs_json=top_orgs,
+            top_divisions_json=top_divisions,
+            partnership_details_json=partnership_details,
             org_type_counts_json=json.dumps(
                 {ot: int((df[org_type_col] == ot).sum()) for ot in org_types_present}
             ),
         )
     )
+
+
+# ---------------------------------------------------------------------------
+# Shared utility
+# ---------------------------------------------------------------------------
 
 
 def save_html(html: str, output_path: str | Path) -> Path:

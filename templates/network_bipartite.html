@@ -14,49 +14,38 @@
   #label-layer {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
-    pointer-events: none;
-    z-index: 10;
+    pointer-events: none; z-index: 10;
   }
   .node-label {
     position: absolute;
-    transform: translateY(-50%);
     white-space: nowrap;
     font-family: sans-serif;
-    font-size: 11px;
-    color: #222;
-    background: rgba(255,255,255,0.82);
+    font-size: 10px;
+    color: #666;                          /* light grey at rest */
+    background: rgba(255,255,255,0.75);
     padding: 2px 7px;
     border-radius: 10px;
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.05);
     pointer-events: none;
-    transition: opacity 0.15s ease, color 0.15s ease;
+    transition: opacity 0.15s ease, color 0.15s ease, font-weight 0.1s ease;
     line-height: 1.4;
+    opacity: 1;                           /* always visible */
   }
-  .node-label.dimmed {
-    opacity: 0.18;
-  }
-  .node-label.muted {
-    color: #aaa;
-  }
-  .node-label.highlighted {
-    font-weight: bold;
-    font-size: 12px;
-    color: #000;
+  .node-label.visible {
     opacity: 1;
-    background: rgba(255,255,255,0.96);
-    border-color: rgba(0,0,0,0.12);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   }
-
-  /* ── Column headers ── */
-  .col-header {
-    position: fixed; top: 12px;
-    background: rgba(255,255,255,0.92);
-    border: 1px solid #ddd; border-radius: 6px;
-    padding: 4px 14px; font-size: 12px; font-weight: bold;
-    color: #333; z-index: 998; letter-spacing: 0.03em;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    transform: translateX(-50%);
+  .node-label.div-label {
+    font-weight: 600;
+    font-size: 11px;
+    color: #888;     /* same grey family as org labels, just slightly darker */
+  }
+  .node-label.dimmed  { opacity: 0.1; }
+  .node-label.highlighted {
+    font-weight: bold; font-size: 12px;
+    color: #000; opacity: 1;
+    background: rgba(255,255,255,0.97);
+    border-color: rgba(0,0,0,0.13);
+    box-shadow: 0 1px 5px rgba(0,0,0,0.12);
   }
 
   /* ── Legend ── */
@@ -67,37 +56,28 @@
     padding: 14px 18px; font-size: 12px; color: #111;
     z-index: 999; line-height: 2; max-height: 90vh;
     overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    min-width: 220px; max-width: 240px;
+    min-width: 220px; max-width: 250px;
   }
-  .section-divider {
-    border-top: 1px solid #eee; margin: 10px 0 8px; padding-top: 8px;
-  }
+  .section-divider { border-top: 1px solid #eee; margin: 10px 0 8px; padding-top: 8px; }
   .section-title {
     font-size: 11px; font-weight: bold; color: #555;
     text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
   }
-  .spark-row {
-    display: flex; align-items: center; margin-bottom: 7px; gap: 6px;
-  }
-  .spark-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .spark-row { display: flex; align-items: center; margin-bottom: 7px; gap: 6px; }
+  .spark-dot    { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .spark-square { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
   .spark-name {
     font-size: 10px; color: #333; flex: 1;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
   }
-  .spark-line-wrap {
-    flex: 1; height: 6px; background: #f0f0f0;
-    border-radius: 3px; overflow: hidden; min-width: 40px;
-  }
-  .spark-line-fill {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, #90CAF9, #1565C0);
-  }
-  .spark-count { font-size: 9px; color: #888; width: 18px; text-align: right; flex-shrink: 0; }
+  .spark-line-wrap { flex: 1; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; min-width: 40px; }
+  .spark-line-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #90CAF9, #1565C0); }
+  .spark-count { font-size: 9px; color: #888; width: 20px; text-align: right; flex-shrink: 0; }
 
   /* ── Summary panel ── */
   #summary-panel {
     position: fixed; top: 20px; right: 20px;
-    width: 270px; max-height: 85vh; overflow-y: auto;
+    width: 280px; max-height: 85vh; overflow-y: auto;
     background: rgba(255,255,255,0.97);
     border: 1px solid #ddd; border-radius: 10px;
     padding: 16px 18px; font-size: 13px; color: #111;
@@ -110,145 +90,323 @@
   #summary-panel .s-section { font-weight: bold; margin-top: 10px; margin-bottom: 4px; font-size: 12px; }
   #summary-panel .s-item    { padding-left: 10px; font-size: 12px; }
   #summary-panel .s-sub     { padding-left: 10px; font-size: 11px; color: #999; }
-  #summary-panel .s-hint    { font-size: 11px; color: #aaa; margin-top: 10px; }
+  #summary-panel .s-weight  { font-size: 10px; color: #aaa; margin-left: 4px; }
   #summary-panel .s-pin     { font-size: 10px; color: #aaa; margin-top: 12px;
                                border-top: 1px solid #eee; padding-top: 8px; }
+
+  /* Expandable org table */
+  .s-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; }
+  .s-table th { text-align: left; padding: 4px 6px; background: #f0f4f8;
+                color: #084594; font-size: 10px; border-bottom: 1px solid #ddd; }
+  .s-org-row { cursor: pointer; transition: background 0.1s; }
+  .s-org-row:hover { background: #f5f8ff; }
+  .s-org-row td { padding: 5px 6px; border-bottom: 1px solid #f0f0f0;
+                  vertical-align: middle; }
+  .s-org-name { font-weight: 600; font-size: 11px; word-break: break-word; }
+  .s-org-type { font-size: 10px; }
+  .s-org-count { font-size: 11px; white-space: nowrap; }
+  .s-expand-btn { cursor: pointer; font-size: 10px; color: #6BAED6;
+                  background: #eef4fb; border-radius: 3px; padding: 1px 5px; }
+
+  /* Nested detail table */
+  .s-detail-row td { padding: 0; background: #fafbfd; }
+  .s-detail-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .s-detail-table th { padding: 3px 6px; background: #e8eef5; color: #555;
+                       font-weight: 600; border-bottom: 1px solid #ddd; }
+  .s-detail-table td { padding: 4px 6px; border-bottom: 1px solid #eee;
+                       vertical-align: top; word-break: break-word; }
+  .s-detail-table tr:last-child td { border-bottom: none; }
+
+  /* Edge click — side-by-side entity header */
+  .s-edge-header { display: flex; align-items: stretch; gap: 6px;
+                   margin-bottom: 10px; }
+  .s-edge-entity { flex: 1; display: flex; align-items: center; gap: 8px;
+                   padding: 8px 10px; border-radius: 6px;
+                   border: 1.5px solid transparent; }
+  .s-edge-dot    { width: 12px; height: 12px; border-radius: 50%;
+                   flex-shrink: 0; }
+  .s-edge-label  { flex: 1; min-width: 0; }
+  .s-edge-name   { font-weight: 700; font-size: 11px; word-break: break-word;
+                   line-height: 1.3; }
+  .s-edge-type   { font-size: 10px; color: #888; margin-top: 2px; }
+  .s-edge-connector { font-size: 18px; color: #ccc; display: flex;
+                      align-items: center; flex-shrink: 0; }
+  .s-edge-count  { font-size: 11px; color: #666; margin-bottom: 4px;
+                   padding-bottom: 8px; border-bottom: 1px solid #eee; }
+
+  /* ── Stabilizing overlay ── */
+  #loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(248,249,250,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000; font-size: 14px; color: #555;
+    flex-direction: column; gap: 12px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #ddd; border-top-color: #607D8B;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div id="network-container"></div>
 <div id="label-layer"></div>
-
-<!-- Column headers — positioned dynamically by JS -->
-<div id="col-field"    class="col-header">Science Fields</div>
-<div id="col-staff"    class="col-header">Staff</div>
-<div id="col-division" class="col-header">Divisions</div>
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <span>Laying out network…</span>
+</div>
 
 <!-- Legend -->
-<div id="legend">
-  <b style="font-size:13px;">Science Field ↔ Staff ↔ Division Network</b><br><br>
-  <b>Science Categories</b>
+<div id="legend" style="display:none;">
+  <b style="font-size:13px;">DWR Division <-> Partner Organization Network</b><br>
+  <span style="font-size:10px;color:#888;">Edge width = # partnerships · Drag nodes freely</span>
+  <br><br>
+
+  <!-- Summary panel — populated from static data injected at report time -->
+  <div id="summary-panel" style="
+    background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px;
+    padding:10px 12px; margin-bottom:12px; font-size:11px;">
+
+    <b style="font-size:12px; color:#084594;">Top Partner Organizations</b>
+    <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin:3px 0 4px;">
+      <span>Organization</span><span>Partnerships</span>
+    </div>
+    <div id="top-orgs-list" style="margin:0 0 10px;">
+      {% for org in top_orgs %}
+      <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
+        <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              title="{{ org.name }}">{{ org.name }}</span>
+        <span style="color:#6BAED6; font-weight:600; margin-left:8px; white-space:nowrap;">
+          {{ org.connections }} 🤝
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <b style="font-size:12px; color:#084594;">Top DWR Divisions</b>
+    <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin:3px 0 4px;">
+      <span>Division</span><span>Partnerships</span>
+    </div>
+    <div id="top-divisions-list" style="margin:0;">
+      {% for div in top_divisions %}
+      <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
+        <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              title="{{ div.name }}">{{ div.name }}</span>
+        <span style="color:#FFB74D; font-weight:600; margin-left:8px; white-space:nowrap;">
+          {{ div.connections }} 🤝
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Node size legend -->
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px;
+              padding:10px 12px; margin-bottom:12px; font-size:11px;">
+    <b style="font-size:12px; color:#084594;">Node Size</b>
+    <div style="margin-top:8px; display:flex; align-items:center; gap:10px; justify-content:space-between;">
+      <div style="text-align:center;">
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="4" fill="#aaa"/>
+        </svg>
+        <div style="color:#888; font-size:10px; margin-top:2px;">fewer</div>
+      </div>
+      <div style="flex:1; height:1px; background:linear-gradient(to right, #ddd, #aaa);"></div>
+      <div style="text-align:center;">
+        <svg width="30" height="30" viewBox="0 0 30 30">
+          <circle cx="15" cy="15" r="10" fill="#aaa"/>
+        </svg>
+        <div style="color:#888; font-size:10px; margin-top:2px;">more</div>
+      </div>
+    </div>
+    <div style="color:#aaa; font-size:10px; margin-top:6px; text-align:center;">
+      Size = total partnerships (1 – {{ max_degree }})
+    </div>
+  </div>
+
+  <br>
+
+  <b>Organization Type</b>
   
   <div>
-    <span style="color:#1E88E5;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Biological and Ecological Sciences</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#E53935;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Federal agency or department</span>
   </div>
   
   <div>
-    <span style="color:#43A047;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Climate Change Science and Adaptation</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#6D4C41;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Local or Regional agency</span>
   </div>
   
   <div>
-    <span style="color:#E53935;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Computer and Information Sciences</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#00ACC1;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">NGO</span>
   </div>
   
   <div>
-    <span style="color:#8E24AA;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Engineering</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#F4511E;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Network/ Collaborative</span>
   </div>
   
   <div>
-    <span style="color:#F4511E;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Geological and Earth Sciences</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#D81B60;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Non-profit</span>
   </div>
   
   <div>
-    <span style="color:#00ACC1;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Planning and Social Sciences</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#8E24AA;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Public Research Lab</span>
+  </div>
+  
+  <div>
+    <span style="display:inline-block;width:10px;height:10px;background:#FB8C00;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Public/Private</span>
+  </div>
+  
+  <div>
+    <span style="display:inline-block;width:10px;height:10px;background:#43A047;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">State agency or department</span>
+  </div>
+  
+  <div>
+    <span style="display:inline-block;width:10px;height:10px;background:#3949AB;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Tribe</span>
+  </div>
+  
+  <div>
+    <span style="display:inline-block;width:10px;height:10px;background:#1E88E5;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">University</span>
   </div>
   
   <br>
   <div>
-    <span style="color:#81C784;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Staff</span>
+    <span style="display:inline-block;width:12px;height:12px;background:#607D8B;
+                 border-radius:50%;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;font-weight:bold;">DWR Division (circle)</span>
   </div>
   <div>
-    <span style="color:#FFB74D;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Division</span>
+    <span style="display:inline-block;width:10px;height:10px;background:#aaa;
+                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
+    <span style="font-size:11px;">Organization (square)</span>
   </div>
   <br>
   <span style="color:#888;font-size:10px;">
-    Hover to highlight · Click to pin
+    Hover or click to reveal labels &amp; connections<br>
+    Top 5 divisions always labeled<br>
+    Drag nodes · Click canvas to unpin
   </span>
-  <div id="spark-fields"    class="section-divider"></div>
-  <div id="spark-staff"     class="section-divider"></div>
+
   <div id="spark-divisions" class="section-divider"></div>
+  <div id="spark-orgs"      class="section-divider"></div>
 </div>
 
-<!-- Summary Panel -->
 <div id="summary-panel"></div>
 
 <script>
+function toggleDetail(subId) {
+    var row = document.getElementById(subId);
+    if (!row) return;
+    var isOpen = row.style.display !== "none";
+    // Collapse all others first
+    document.querySelectorAll(".s-detail-row").forEach(function(r) {
+        r.style.display = "none";
+        // Reset expand btn arrows
+        var prevRow = r.previousElementSibling;
+        if (prevRow) {
+            var btn = prevRow.querySelector(".s-expand-btn");
+            if (btn) btn.innerHTML = btn.innerHTML.replace("▼", "▶");
+        }
+    });
+    if (!isOpen) {
+        row.style.display = "";
+        // Update arrow on the clicked row
+        var prevRow = row.previousElementSibling;
+        if (prevRow) {
+            var btn = prevRow.querySelector(".s-expand-btn");
+            if (btn) btn.innerHTML = btn.innerHTML.replace("▶", "▼");
+        }
+    }
+}
+function hoverOrg(nodeId) {
+    if (!network || !layoutReady) return;
+    network.selectNodes([nodeId]);
+}
+function unhoverOrg() {
+    if (!network || !layoutReady || activeNode) return;
+    network.unselectAll();
+}
+function toggleEdgeDetail(rowId) {
+    // Edge panel rows are already flat — clicking does nothing extra for now
+    // Reserved for future third-level expansion if needed
+}
+
 function initNetwork() {
 
 // ── Data injected by Python ─────────────────────────────────────────────
-var nodesData     = {{ nodes_json | tojson }};
-var edgesData     = {{ edges_json | tojson }};
-var adjacency     = {{ adjacency_json | tojson }};
-var nodeMeta      = {{ node_meta_json | tojson }};
-var divisionIds   = {{ divisions_json | tojson }};
-var GLOW        = "#FFD700";
-var DIM         = "#e8e8e8";
-var DOT_SIZE    = 14;
-var X_FIELD     = -700;
-var X_STAFF     = 0;
-var X_DIVISION  = 700;
+var nodesData         = {{ nodes_json | tojson }};
+var edgesData         = {{ edges_json | tojson }};
+var adjacency         = {{ adjacency_json | tojson }};
+var edgeIndex         = {{ edge_index_json | tojson }};
+var nodeMeta          = {{ node_meta_json | tojson }};
+var divisionIds       = {{ division_ids_json | tojson }};
+var orgTypeColorsData = {{ org_type_colors_json | tojson }};
+var partnershipDetails = {{ partnership_details_json | tojson }};
+var orgTypeCounts      = {{ org_type_counts_json | tojson }};
+var GLOW              = "#FFD700";
+var DIM               = "#e8e8e8";
+var BASE_SIZE         = 14;
+var TOP_DIV_N         = 5;   // always-labeled top divisions
 
 // ── State ─────────────────────────────────────────────────────────────────
 var activeNode  = null;
 var activeEdge  = null;
 var hoveredNode = null;
+var layoutReady = false;
 
 // ── Degree computation ────────────────────────────────────────────────────
 var nodeDegree = {};
-nodesData.forEach(function(n) { nodeDegree[n.id] = 0; });
-Object.keys(adjacency).forEach(function(id) {
-    nodeDegree[id] = (adjacency[id] || []).length;
-});
+nodesData.forEach(function(n) { nodeDegree[n.id] = (adjacency[n.id] || []).length; });
 
-var staffScienceDeg  = {};
-var staffDivisionDeg = {};
-nodesData.filter(function(n) { return n.group === "staff"; }).forEach(function(n) {
-    var nbrs = adjacency[n.id] || [];
-    staffScienceDeg[n.id]  = nbrs.filter(function(x) { return nodeMeta[x] && nodeMeta[x].type === "field";    }).length;
-    staffDivisionDeg[n.id] = nbrs.filter(function(x) { return nodeMeta[x] && nodeMeta[x].type === "division"; }).length;
-});
+var divNodes = nodesData.filter(function(n) { return n.group === "division"; });
+var orgNodes = nodesData.filter(function(n) { return n.group === "org"; });
 
-var fieldNodes    = nodesData.filter(function(n) { return n.group === "field";    });
-var staffNodes    = nodesData.filter(function(n) { return n.group === "staff";    });
-var divisionNodes = nodesData.filter(function(n) { return n.group === "division"; });
-
-function rankByDegree(nodes) {
+function rankByDeg(nodes) {
     var sorted = nodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); });
-    var ranks  = {};
-    sorted.forEach(function(n, i) { ranks[n.id] = i; });
-    return ranks;
+    var r = {};
+    sorted.forEach(function(n,i) { r[n.id] = i; });
+    return r;
 }
-var fieldRank    = rankByDegree(fieldNodes);
-var staffRank    = rankByDegree(staffNodes);
-var divisionRank = rankByDegree(divisionNodes);
+var divRank = rankByDeg(divNodes);
+var orgRank = rankByDeg(orgNodes);
 
-function groupMaxDeg(nodes) {
-    return Math.max.apply(null, nodes.map(function(n) { return nodeDegree[n.id] || 1; }));
+function groupMax(nodes) {
+    return Math.max.apply(null, nodes.map(function(n) { return nodeDegree[n.id]||1; }));
 }
-var maxFieldDeg    = groupMaxDeg(fieldNodes);
-var maxStaffDeg    = groupMaxDeg(staffNodes);
-var maxDivisionDeg = groupMaxDeg(divisionNodes);
+var maxDivDeg = groupMax(divNodes);
+var maxOrgDeg = groupMax(orgNodes);
 
 function nodeSize(id) {
     var meta = nodeMeta[id];
-    if (!meta) return DOT_SIZE;
-    var deg, mx;
-    if (meta.type === "field")    { deg = nodeDegree[id]||1; mx = maxFieldDeg;    }
-    if (meta.type === "staff")    { deg = nodeDegree[id]||1; mx = maxStaffDeg;    }
-    if (meta.type === "division") { deg = nodeDegree[id]||1; mx = maxDivisionDeg; }
-    return DOT_SIZE + (DOT_SIZE * 1.5) * (deg / mx);
+    if (!meta) return BASE_SIZE;
+    var deg = nodeDegree[id] || 1;
+    var mx  = meta.type === "division" ? maxDivDeg : maxOrgDeg;
+    return BASE_SIZE + (BASE_SIZE * 1.8) * (deg / mx);
 }
 
-// ── vis.js init ───────────────────────────────────────────────────────────
+// ── vis.js init with live physics ────────────────────────────────────────
 var container = document.getElementById("network-container");
 var visNodes  = new vis.DataSet(nodesData);
 var visEdges  = new vis.DataSet(edgesData);
@@ -256,33 +414,64 @@ var network   = new vis.Network(
     container,
     { nodes: visNodes, edges: visEdges },
     {
-        physics:     { enabled: false },
-        interaction: { hover: true, tooltipDelay: 200 },
-        nodes:       { borderWidth: 0, shadow: false },
-        edges:       { smooth: { type: "curvedCW", roundness: 0.1 } },
+        physics: {
+            enabled: true,
+            barnesHut: {
+                gravitationalConstant: -12000,
+                centralGravity:        0.08,
+                springLength:          200,
+                springConstant:        0.02,
+                damping:               0.25,
+            },
+            stabilization: { enabled: true, iterations: 150, fit: true },
+        },
+        interaction: { hover: true, tooltipDelay: 200, dragNodes: true },
+        nodes:        { borderWidth: 0, shadow: false },
+        edges:        { smooth: { type: "continuous" } },
     }
 );
 
-// Apply degree-based sizes, no labels in vis.js
+// Apply sizes, no vis.js labels
 visNodes.update(nodesData.map(function(n) {
     return { id: n.id, label: "", size: nodeSize(n.id) };
 }));
 
-network.once("afterDrawing", function() {
-    network.fit({ animation: { duration: 600, easingFunction: "easeInOutQuad" } });
+// After physics settles — freeze layout, show UI
+network.on("stabilizationIterationsDone", function() {
+    network.setOptions({ physics: { enabled: false } });
+    layoutReady = true;
+
+    // Inject org type counts into legend
+    document.querySelectorAll(".org-type-label").forEach(function(el) {
+        var ot    = el.dataset.orgType;
+        var count = orgTypeCounts[ot] || 0;
+        if (count > 0) {
+            var badge = document.createElement("span");
+            badge.textContent = count;
+            badge.style.cssText = "float:right; background:#eef; color:#555; " +
+                                  "border-radius:8px; padding:0 5px; font-size:10px; " +
+                                  "font-weight:600; margin-left:4px;";
+            el.appendChild(badge);
+        }
+    });
+
+    document.getElementById("loading-overlay").style.display = "none";
+    document.getElementById("legend").style.display = "block";
+
+    network.fit({ animation: { duration: 500, easingFunction: "easeInOutQuad" } });
+
     buildLabelLayer();
     positionLabels();
-    positionColumnHeaders();
     buildSparkSections();
     restoreDefault();
-    updateLabelStyles();   // ← add this line
 });
 
-network.on("afterDrawing", function() { positionLabels(); });
-network.on("zoom",         function() { positionColumnHeaders(); updateLabelStyles(); });
-network.on("dragEnd",      function() { positionColumnHeaders(); });
+// Reposition labels every frame while dragging
+network.on("afterDrawing", function() {
+    if (layoutReady) positionLabels();
+});
 
-// ── HTML label layer ──────────────────────────────────────────────────────
+// ── HTML label layer ───────────────────────────────────────────────────────
 var labelLayer = document.getElementById("label-layer");
 var labelEls   = {};
 
@@ -291,9 +480,10 @@ function buildLabelLayer() {
     labelEls = {};
     nodesData.forEach(function(n) {
         var el            = document.createElement("div");
-        el.className      = "node-label";
+        el.className      = "node-label" + (n.group === "division" ? " div-label" : "");
         el.textContent    = n.id;
         el.dataset.nodeId = n.id;
+        // All labels visible from the start — no special treatment
         labelLayer.appendChild(el);
         labelEls[n.id] = el;
     });
@@ -302,56 +492,29 @@ function buildLabelLayer() {
 function positionLabels() {
     if (!labelEls || Object.keys(labelEls).length === 0) return;
     var positions = network.getPositions();
-    nodesData.forEach(function(n) {
-        var el = labelEls[n.id];
-        if (!el || !positions[n.id]) return;
-        var pos   = network.canvasToDOM(positions[n.id]);
-        var sz    = nodeSize(n.id);
-        var scale = network.getScale();
-        var gap   = (sz * scale) + 6;
-        var meta  = nodeMeta[n.id];
-        if (meta && meta.type === "field") {
-            // Left of dot — text right-edge near dot
-            el.style.left      = (pos.x - gap) + "px";
-            el.style.top       = pos.y + "px";
-            el.style.transform = "translateY(-50%) translateX(-100%)";
-        } else {
-            // Staff + Division — right of dot
-            el.style.left      = (pos.x + gap) + "px";
-            el.style.top       = pos.y + "px";
-            el.style.transform = "translateY(-50%)";
-        }
-    });
-}
+    var scale     = network.getScale();
 
-// ── Label style helpers ───────────────────────────────────────────────────
-function updateLabelStyles() {
-    if (activeNode || activeEdge || hoveredNode) return;
-    var scale = network.getScale ? network.getScale() : 1;
-    applyDefaultLabelStyles(scale);
-}
-
-function applyDefaultLabelStyles(scale) {
     nodesData.forEach(function(n) {
         var el = labelEls[n.id];
         if (!el) return;
-        var meta = nodeMeta[n.id];
-        var rank = 0;
-        if (meta && meta.type === "field")    rank = fieldRank[n.id]    || 0;
-        if (meta && meta.type === "staff")    rank = staffRank[n.id]    || 0;
-        if (meta && meta.type === "division") rank = divisionRank[n.id] || 0;
+        var cp = positions[n.id];
+        if (!cp) return;
+        var pos   = network.canvasToDOM(cp);
+        var sz    = nodeSize(n.id);
+        var dotPx = sz * scale;
+        // Label floats just below the node
+        el.style.left      = pos.x + "px";
+        el.style.top       = (pos.y + dotPx + 8) + "px";
+        el.style.transform = "translateX(-50%)";
+    });
+}
 
-        el.classList.remove("dimmed", "muted", "highlighted");
-
-        if (meta && meta.type === "staff") {
-            // Hide staff labels at low zoom, show top-ranked at mid zoom
-            if      (scale < 0.2)  { el.classList.add("dimmed"); }
-            else if (scale < 0.4)  { if (rank >= 5)  el.classList.add("dimmed"); }
-            else if (scale < 0.6)  { if (rank >= 10) el.classList.add("muted");  }
-        } else if (scale < 0.25 && rank >= 8) {
-            // Existing muted logic for fields/divisions at extreme zoom-out
-            el.classList.add("muted");
-        }
+// ── Label state helpers ───────────────────────────────────────────────────
+function showDefaultLabels() {
+    nodesData.forEach(function(n) {
+        var el = labelEls[n.id];
+        if (!el) return;
+        el.classList.remove("dimmed", "highlighted");
     });
 }
 
@@ -359,7 +522,7 @@ function highlightLabels(highlightSet) {
     nodesData.forEach(function(n) {
         var el = labelEls[n.id];
         if (!el) return;
-        el.classList.remove("dimmed", "muted", "highlighted");
+        el.classList.remove("dimmed", "highlighted");
         if (highlightSet.has(n.id)) {
             el.classList.add("highlighted");
         } else {
@@ -368,27 +531,14 @@ function highlightLabels(highlightSet) {
     });
 }
 
-function restoreLabelStyles() {
-    var scale = network.getScale ? network.getScale() : 1;
-    applyDefaultLabelStyles(scale);
-}
-
-// ── Column header positioning ─────────────────────────────────────────────
-function positionColumnHeaders() {
-    var xF = network.canvasToDOM({ x: X_FIELD,    y: 0 }).x;
-    var xS = network.canvasToDOM({ x: X_STAFF,    y: 0 }).x;
-    var xD = network.canvasToDOM({ x: X_DIVISION, y: 0 }).x;
-    document.getElementById("col-field").style.left    = xF + "px";
-    document.getElementById("col-staff").style.left    = xS + "px";
-    document.getElementById("col-division").style.left = xD + "px";
-}
-
-// ── Spark chart builder ───────────────────────────────────────────────────
-function sparkRow(id, color, deg, maxDeg) {
+// ── Spark sections ─────────────────────────────────────────────────────────
+function sparkRow(id, color, isSquare, deg, maxDeg) {
     var pct   = maxDeg > 0 ? (deg / maxDeg * 100) : 0;
-    var short = id.length > 20 ? id.substring(0, 19) + "…" : id;
-    return '<div class="spark-row">' +
-        '<div class="spark-dot" style="background:' + color + ';"></div>' +
+    var short = id.length > 22 ? id.substring(0, 21) + "…" : id;
+    var shape = isSquare
+        ? '<div class="spark-square" style="background:' + color + ';"></div>'
+        : '<div class="spark-dot"    style="background:' + color + ';"></div>';
+    return '<div class="spark-row">' + shape +
         '<span class="spark-name" title="' + id + '">' + short + '</span>' +
         '<div class="spark-line-wrap"><div class="spark-line-fill" style="width:' + pct + '%;"></div></div>' +
         '<span class="spark-count">' + deg + '</span>' +
@@ -396,155 +546,238 @@ function sparkRow(id, color, deg, maxDeg) {
 }
 
 function buildSparkSections() {
-    // Top 5 Science Fields
-    var topF  = fieldNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
-    var maxF  = nodeDegree[topF[0].id] || 1;
-    var fHtml = '<div class="section-title">Top 5 Science Fields</div>';
-    topF.forEach(function(n) { fHtml += sparkRow(n.id, nodeMeta[n.id].color, nodeDegree[n.id]||0, maxF); });
-    document.getElementById("spark-fields").innerHTML = fHtml;
-
-    // Top 5 Divisions
-    var topD  = divisionNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
-    var maxD  = nodeDegree[topD[0].id] || 1;
-    var dHtml = '<div class="section-title">Top 5 Divisions</div>';
-    topD.forEach(function(n) { dHtml += sparkRow(n.id, "#FFB74D", nodeDegree[n.id]||0, maxD); });
+    var topDivs = divNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
+    var maxD    = nodeDegree[topDivs[0].id] || 1;
+    var dHtml   = '<div class="section-title">Top 5 Divisions</div>';
+    topDivs.forEach(function(n) { dHtml += sparkRow(n.id, nodeMeta[n.id].color, false, nodeDegree[n.id]||0, maxD); });
     document.getElementById("spark-divisions").innerHTML = dHtml;
 
-    // Top 5 Staff by science / by division
-    var topSS  = staffNodes.slice().sort(function(a,b) { return (staffScienceDeg[b.id]||0)-(staffScienceDeg[a.id]||0); }).slice(0,5);
-    var maxSS  = staffScienceDeg[topSS[0].id] || 1;
-    var topSD  = staffNodes.slice().sort(function(a,b) { return (staffDivisionDeg[b.id]||0)-(staffDivisionDeg[a.id]||0); }).slice(0,5);
-    var maxSD  = staffDivisionDeg[topSD[0].id] || 1;
-    var sHtml  = '<div class="section-title">Top 5 Staff — by Science Fields</div>';
-    topSS.forEach(function(n) { sHtml += sparkRow(n.id, "#81C784", staffScienceDeg[n.id]||0, maxSS); });
-    sHtml += '<div style="margin-top:10px;" class="section-title">Top 5 Staff — by Divisions</div>';
-    topSD.forEach(function(n) { sHtml += sparkRow(n.id, "#81C784", staffDivisionDeg[n.id]||0, maxSD); });
-    document.getElementById("spark-staff").innerHTML = sHtml;
+    var topOrgs = orgNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
+    var maxO    = nodeDegree[topOrgs[0].id] || 1;
+    var oHtml   = '<div class="section-title">Top 5 Organizations</div>';
+    topOrgs.forEach(function(n) { oHtml += sparkRow(n.id, nodeMeta[n.id].color, true, nodeDegree[n.id]||0, maxO); });
+    document.getElementById("spark-orgs").innerHTML = oHtml;
 }
 
-// ── Summary panel helpers ─────────────────────────────────────────────────
+// ── Summary panel ──────────────────────────────────────────────────────────
 var panel = document.getElementById("summary-panel");
+
+// Event delegation for panel rows — handles clicks and hovers on dynamically built HTML
+panel.addEventListener("click", function(e) {
+    var row = e.target.closest(".s-org-row");
+    if (!row) return;
+    var subId = row.dataset.sub;
+    if (subId) toggleDetail(subId);
+});
+
+panel.addEventListener("mouseover", function(e) {
+    var row = e.target.closest(".s-org-row");
+    if (!row) return;
+    var nodeId = row.dataset.node;
+    if (nodeId) hoverOrg(nodeId);
+});
+
+panel.addEventListener("mouseout", function(e) {
+    var row = e.target.closest(".s-org-row");
+    if (!row) return;
+    unhoverOrg();
+});
 
 function typeLabel(id) {
     var m = nodeMeta[id];
     if (!m) return "";
-    if (m.type === "field")    return "Science Field — " + m.category;
-    if (m.type === "staff")    return "Staff";
-    if (m.type === "division") return "Division";
-    return "";
+    if (m.type === "division") return "DWR Division";
+    return m.orgType || "Partner Organization";
 }
 
 function buildSummary(nodeId, pinned) {
     var neighbors = adjacency[nodeId] || [];
     var meta      = nodeMeta[nodeId]  || {};
-    var fields    = neighbors.filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "field";    });
-    var staffList = neighbors.filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "staff";    });
-    var divList   = neighbors.filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "division"; });
+    var html      = '<div class="s-title">' + nodeId + '</div>';
+    html         += '<span class="s-type">' + typeLabel(nodeId) + '</span>';
+    html         += '<span class="s-degree">' + (nodeDegree[nodeId]||0) + ' connections</span>';
 
-    var html  = '<div class="s-title">'   + nodeId + '</div>';
-    html     += '<span class="s-type">'   + typeLabel(nodeId) + '</span>';
-    html     += '<span class="s-degree">' + (nodeDegree[nodeId]||0) + ' total connections</span>';
+    if (meta.type === "division") {
+        var orgsW = neighbors.map(function(o) {
+            var info = edgeIndex[nodeId+"|"+o] || edgeIndex[o+"|"+nodeId] || {};
+            var m2   = nodeMeta[o] || {};
+            var color = orgTypeColorsData[m2.orgType] || "#aaa";
+            return { id: o, weight: info.weight||1, orgType: m2.orgType||"", color: color };
+        }).sort(function(a,b) { return b.weight - a.weight; });
 
-    if (meta.type === "staff") {
-        html += '<div class="s-section">Science Fields (' + fields.length + ')</div>';
-        fields.forEach(function(f) {
-            html += '<div class="s-item">● ' + f + '</div>';
-            html += '<div class="s-sub">' + (nodeMeta[f] ? nodeMeta[f].category : "") + '</div>';
+        html += '<div class="s-section">Partner Organizations (' + orgsW.length + ')</div>';
+        html += '<table class="s-table"><thead><tr>' +
+                '<th>Organization</th><th>Type</th><th style="text-align:right">Partnerships</th>' +
+                '</tr></thead><tbody>';
+        orgsW.forEach(function(o) {
+            var detailKey = nodeId + "|" + o.id;
+            var details   = partnershipDetails[detailKey] || [];
+            var rowId     = "row-" + detailKey.replace(/[^a-z0-9]/gi, "_");
+            var subId     = "sub-" + detailKey.replace(/[^a-z0-9]/gi, "_");
+
+            // Outer row — colored by org type
+            html += '<tr class="s-org-row" style="border-left: 4px solid ' + o.color + ';"' +
+                    ' data-node="' + o.id + '"' +
+                    ' data-sub="' + subId + '">';
+            html += '<td class="s-org-name">' + o.id + '</td>';
+            html += '<td class="s-org-type" style="color:' + o.color + ';">' + o.orgType + '</td>';
+            html += '<td class="s-org-count" style="text-align:right">' +
+                    '<span class="s-expand-btn">' + o.weight + ' ▶</span></td>';
+            html += '</tr>';
+
+            // Nested detail rows (hidden by default)
+            html += '<tr id="' + subId + '" class="s-detail-row" style="display:none;">';
+            html += '<td colspan="3" style="padding:0;">';
+            html += '<table class="s-detail-table">';
+            html += '<thead><tr><th>Contact</th><th>Program(s)</th><th>Status</th><th>Science Fields</th></tr></thead><tbody>';
+            details.forEach(function(d) {
+                html += '<tr>';
+                html += '<td>' + (d.contact  || "—") + '</td>';
+                html += '<td>' + (d.programs || "—") + '</td>';
+                html += '<td>' + (d.status   || "—") + '</td>';
+                html += '<td>' + (d.fields   || "—") + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></td></tr>';
         });
-        html += '<div class="s-section">Divisions (' + divList.length + ')</div>';
-        divList.forEach(function(d) { html += '<div class="s-item">● ' + d + '</div>'; });
-    } else if (meta.type === "field") {
-        html += '<div class="s-section">Connected Staff (' + staffList.length + ')</div>';
-        staffList.forEach(function(s) { html += '<div class="s-item">● ' + s + '</div>'; });
-        html += '<div class="s-hint">Hover a staff node to see their divisions</div>';
-    } else if (meta.type === "division") {
-        html += '<div class="s-section">Connected Staff (' + staffList.length + ')</div>';
-        staffList.forEach(function(s) { html += '<div class="s-item">● ' + s + '</div>'; });
-        html += '<div class="s-hint">Hover a staff node to see their science fields</div>';
+        html += '</tbody></table>';
+
+    } else {
+        var divsW = neighbors.map(function(d) {
+            var info = edgeIndex[nodeId+"|"+d] || edgeIndex[d+"|"+nodeId] || {};
+            return { id: d, weight: info.weight||1 };
+        }).sort(function(a,b) { return b.weight - a.weight; });
+
+        html += '<div class="s-section">DWR Divisions (' + divsW.length + ')</div>';
+        html += '<table class="s-table"><thead><tr>' +
+                '<th>Division</th><th style="text-align:right">Partnerships</th>' +
+                '</tr></thead><tbody>';
+        divsW.forEach(function(d) {
+            var detailKey = d.id + "|" + nodeId;
+            var details   = partnershipDetails[detailKey] || [];
+            var subId     = "sub-" + detailKey.replace(/[^a-z0-9]/gi, "_");
+            var divColor  = (nodeMeta[d.id]||{}).color || "#607D8B";
+
+            html += '<tr class="s-org-row" style="border-left: 4px solid ' + divColor + ';"' +
+                    ' data-node="' + d.id + '"' +
+                    ' data-sub="' + subId + '">';
+            html += '<td class="s-org-name">' + d.id + '</td>';
+            html += '<td class="s-org-count" style="text-align:right">' +
+                    '<span class="s-expand-btn">' + d.weight + ' ▶</span></td>';
+            html += '</tr>';
+
+            html += '<tr id="' + subId + '" class="s-detail-row" style="display:none;">';
+            html += '<td colspan="2" style="padding:0;">';
+            html += '<table class="s-detail-table">';
+            html += '<thead><tr><th>Contact</th><th>Program(s)</th><th>Status</th><th>Science Fields</th></tr></thead><tbody>';
+            details.forEach(function(d2) {
+                html += '<tr>';
+                html += '<td>' + (d2.contact  || "—") + '</td>';
+                html += '<td>' + (d2.programs || "—") + '</td>';
+                html += '<td>' + (d2.status   || "—") + '</td>';
+                html += '<td>' + (d2.fields   || "—") + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></td></tr>';
+        });
+        html += '</tbody></table>';
     }
+
     if (pinned) html += '<div class="s-pin">📌 Pinned — click node or canvas to unpin</div>';
     return html;
 }
 
-function buildEdgeSummary(edgeId, pinned) {
-    var edge         = visEdges.get(edgeId);
-    if (!edge) return "";
-    var fromMeta     = nodeMeta[edge.from] || {};
-    var toMeta       = nodeMeta[edge.to]   || {};
-    var fieldNode    = fromMeta.type === "field"    ? edge.from : (toMeta.type === "field"    ? edge.to : null);
-    var staffNode    = fromMeta.type === "staff"    ? edge.from : (toMeta.type === "staff"    ? edge.to : null);
-    var divisionNode = fromMeta.type === "division" ? edge.from : (toMeta.type === "division" ? edge.to : null);
-    var html = "";
 
-    if (fieldNode && staffNode) {
-        var fieldCat = nodeMeta[fieldNode] ? nodeMeta[fieldNode].category : "";
-        html += '<div class="s-title">' + fieldNode + '</div>';
-        html += '<span class="s-type">Science Field — ' + fieldCat + '</span>';
-        html += '<div class="s-section">↔ Connected Staff</div>';
-        html += '<div class="s-item">● ' + staffNode + '</div>';
-        var staffDivs = (adjacency[staffNode]||[]).filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "division"; });
-        if (staffDivs.length > 0) {
-            html += '<div class="s-section">Divisions reached via ' + staffNode.split(",")[0] + '</div>';
-            staffDivs.forEach(function(d) { html += '<div class="s-item">● ' + d + '</div>'; });
-        }
-        var otherStaff = (adjacency[fieldNode]||[]).filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "staff" && n !== staffNode; });
-        if (otherStaff.length > 0) {
-            html += '<div class="s-section">Other staff on this field (' + otherStaff.length + ')</div>';
-            otherStaff.forEach(function(s) { html += '<div class="s-item">● ' + s + '</div>'; });
-        }
-    } else if (staffNode && divisionNode) {
-        html += '<div class="s-title">' + staffNode + '</div>';
-        html += '<span class="s-type">Staff → ' + divisionNode + '</span>';
-        var staffFields = (adjacency[staffNode]||[]).filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "field"; });
-        if (staffFields.length > 0) {
-            html += '<div class="s-section">Science fields brought to ' + divisionNode + '</div>';
-            staffFields.forEach(function(f) {
-                html += '<div class="s-item">● ' + f + '</div>';
-                html += '<div class="s-sub">' + (nodeMeta[f] ? nodeMeta[f].category : "") + '</div>';
-            });
-        }
-        var otherStaff = (adjacency[divisionNode]||[]).filter(function(n) { return nodeMeta[n] && nodeMeta[n].type === "staff" && n !== staffNode; });
-        if (otherStaff.length > 0) {
-            html += '<div class="s-section">Other staff in ' + divisionNode + ' (' + otherStaff.length + ')</div>';
-            otherStaff.forEach(function(s) { html += '<div class="s-item">● ' + s + '</div>'; });
-        }
-    } else {
-        html += '<div class="s-title">Connection</div>';
-        html += '<div class="s-item">' + edge.from + ' ↔ ' + edge.to + '</div>';
+
+
+function buildEdgeSummary(edgeId, pinned) {
+    var edge     = visEdges.get(edgeId);
+    if (!edge) return "";
+    var fromMeta = nodeMeta[edge.from] || {};
+    var toMeta   = nodeMeta[edge.to]   || {};
+    var divId    = fromMeta.type === "division" ? edge.from : edge.to;
+    var orgId    = fromMeta.type === "org"      ? edge.from : edge.to;
+    var orgMeta  = nodeMeta[orgId] || {};
+    var divMeta  = nodeMeta[divId] || {};
+    var divColor = divMeta.color  || "#607D8B";
+    var orgColor = orgTypeColorsData[orgMeta.orgType] || "#90A4AE";
+
+    var details  = partnershipDetails[divId+"|"+orgId]
+                || partnershipDetails[orgId+"|"+divId]
+                || [];
+    var weight   = details.length || ((edgeIndex[divId+"|"+orgId]||{}).weight||1);
+
+    // ── Side-by-side entity header ──────────────────────────────────────
+    var html = '<div class="s-edge-header">';
+    html += '<div class="s-edge-entity" style="border-color:' + divColor + ';background:' + divColor + '18;">';
+    html += '<div class="s-edge-dot" style="background:' + divColor + ';"></div>';
+    html += '<div class="s-edge-label"><div class="s-edge-name">' + divId + '</div>';
+    html += '<div class="s-edge-type">DWR Division</div></div>';
+    html += '</div>';
+
+    html += '<div class="s-edge-connector">↔</div>';
+
+    html += '<div class="s-edge-entity" style="border-color:' + orgColor + ';background:' + orgColor + '18;">';
+    html += '<div class="s-edge-dot" style="background:' + orgColor + ';border-radius:2px;"></div>';
+    html += '<div class="s-edge-label"><div class="s-edge-name">' + orgId + '</div>';
+    html += '<div class="s-edge-type">' + (orgMeta.orgType||"Organization") + '</div></div>';
+    html += '</div>';
+    html += '</div>';
+
+    // ── Partnership count ────────────────────────────────────────────────
+    html += '<div class="s-edge-count">' + weight +
+            ' partnership' + (weight !== 1 ? 's' : '') + '</div>';
+
+    // ── Expandable partnership detail table ──────────────────────────────
+    if (details.length > 0) {
+        html += '<table class="s-table" style="margin-top:8px;">';
+        html += '<thead><tr>' +
+                '<th>Contact</th><th>Program(s)</th><th>Status</th><th>Science Fields</th>' +
+                '</tr></thead><tbody>';
+
+        details.forEach(function(d, i) {
+            var rowId = "edge-detail-" + edgeId + "-" + i;
+            html += '<tr class="s-org-row" onclick="toggleEdgeDetail(\'' + rowId + '\')">';
+            html += '<td class="s-org-name">' + (d.contact  || "—") + '</td>';
+            html += '<td>' + (d.programs || "—") + '</td>';
+            html += '<td>' + (d.status   || "—") + '</td>';
+            html += '<td>' + (d.fields   || "—") + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
     }
+
     if (pinned) html += '<div class="s-pin">📌 Pinned — click edge or canvas to unpin</div>';
     return html;
 }
 
-// ── Apply / restore highlight ─────────────────────────────────────────────
+
+// ── Apply / restore highlight ──────────────────────────────────────────────
 function applyHighlight(nodeId, pinned) {
     var neighbors = new Set(adjacency[nodeId] || []);
     var highlight = new Set([nodeId, ...neighbors]);
 
     visNodes.update(visNodes.get().map(function(n) {
-        var isHovered = n.id === nodeId;
-        var isHighlit = highlight.has(n.id);
-        var orig      = nodeMeta[n.id] ? nodeMeta[n.id].color : "#cccccc";
-        var sz        = nodeSize(n.id);
-        if (isHighlit) {
+        var orig = nodeMeta[n.id] ? nodeMeta[n.id].color : "#cccccc";
+        var sz   = nodeSize(n.id);
+        if (highlight.has(n.id)) {
+            var isMain = n.id === nodeId;
             return { id: n.id, label: "",
-                color:       { background: orig, border: isHovered ? "#222222" : GLOW },
-                borderWidth: isHovered ? 3 : 2,
-                size:        sz + 8,
-                shadow:      isHovered ? false : { enabled: true, color: "rgba(255,215,0,0.65)", size: 16, x:0, y:0 } };
+                color:       { background: orig, border: isMain ? "#222" : GLOW },
+                borderWidth: isMain ? 3 : 2, size: sz + 6,
+                shadow:      isMain ? false : { enabled:true, color:"rgba(255,215,0,0.65)", size:14, x:0, y:0 } };
         } else {
-            return { id: n.id, label: "",
-                color: { background: DIM, border: DIM },
-                borderWidth: 0, size: sz, shadow: false };
+            return { id: n.id, label: "", color: { background: DIM, border: DIM },
+                     borderWidth: 0, size: sz, shadow: false };
         }
     }));
 
     visEdges.update(visEdges.get().map(function(e) {
         if (highlight.has(e.from) && highlight.has(e.to)) {
-            return { id: e.id, color: { color: "#111111" }, width: 3.5,
-                     shadow: { enabled: true, color: "rgba(255,215,0,0.3)", size: 8, x:0, y:0 } };
+            return { id: e.id, color: { color: "#111" }, width: Math.max(e.width||1, 3),
+                     shadow: { enabled:true, color:"rgba(255,215,0,0.3)", size:8, x:0, y:0 } };
         } else {
-            return { id: e.id, color: { color: "rgba(210,210,210,0.15)" }, width: 0.5, shadow: false };
+            return { id: e.id, color: { color: "rgba(210,210,210,0.15)" }, shadow: false };
         }
     }));
 
@@ -560,9 +793,9 @@ function restoreDefault() {
                  borderWidth: 0, size: nodeSize(n.id), shadow: false };
     }));
     visEdges.update(visEdges.get().map(function(e) {
-        return { id: e.id, color: { color: "rgba(180,180,180,0.4)" }, width: 1.2, shadow: false };
+        return { id: e.id, color: { color: "rgba(160,160,160,0.45)" }, shadow: false };
     }));
-    restoreLabelStyles();
+    showDefaultLabels();
     panel.style.display = "none";
     activeNode = null;
     activeEdge = null;
@@ -582,50 +815,44 @@ network.on("blurNode", function() {
 network.on("click", function(params) {
     // Edge click
     if (params.edges.length > 0 && params.nodes.length === 0) {
-        var clickedEdge = params.edges[0];
-        if (activeEdge === clickedEdge) {
+        var eid = params.edges[0];
+        if (activeEdge === eid) {
             activeEdge = null; activeNode = null; restoreDefault();
         } else {
-            activeEdge = clickedEdge; activeNode = null;
-            var edge      = visEdges.get(clickedEdge);
-            var highlight = new Set([edge.from, edge.to]);
-
+            activeEdge = eid; activeNode = null;
+            var edge = visEdges.get(eid);
+            var hl   = new Set([edge.from, edge.to]);
             visNodes.update(visNodes.get().map(function(n) {
-                var isHighlit = highlight.has(n.id);
-                var orig      = nodeMeta[n.id] ? nodeMeta[n.id].color : "#cccccc";
-                var sz        = nodeSize(n.id);
-                if (isHighlit) {
+                var orig = nodeMeta[n.id] ? nodeMeta[n.id].color : "#cccccc";
+                var sz   = nodeSize(n.id);
+                if (hl.has(n.id)) {
                     return { id: n.id, label: "", color: { background: orig, border: GLOW },
-                             borderWidth: 2, size: sz + 8,
-                             shadow: { enabled: true, color: "rgba(255,215,0,0.65)", size: 16, x:0, y:0 } };
+                             borderWidth: 2, size: sz+6,
+                             shadow: { enabled:true, color:"rgba(255,215,0,0.65)", size:14, x:0, y:0 } };
                 } else {
                     return { id: n.id, label: "", color: { background: DIM, border: DIM },
                              borderWidth: 0, size: sz, shadow: false };
                 }
             }));
-
             visEdges.update(visEdges.get().map(function(e) {
-                if (e.id === clickedEdge) {
-                    return { id: e.id, color: { color: "#111111" }, width: 4,
-                             shadow: { enabled: true, color: "rgba(255,215,0,0.5)", size: 10, x:0, y:0 } };
-                } else {
-                    return { id: e.id, color: { color: "rgba(210,210,210,0.15)" }, width: 0.5, shadow: false };
+                if (e.id === eid) {
+                    return { id: e.id, color: { color: "#111" }, width: Math.max((e.width||1)+2, 4),
+                             shadow: { enabled:true, color:"rgba(255,215,0,0.5)", size:10, x:0, y:0 } };
                 }
+                return { id: e.id, color: { color: "rgba(210,210,210,0.15)" }, shadow: false };
             }));
-
-            highlightLabels(highlight);
-            panel.innerHTML     = buildEdgeSummary(clickedEdge, true);
+            highlightLabels(hl);
+            panel.innerHTML     = buildEdgeSummary(eid, true);
             panel.style.display = "block";
         }
         return;
     }
-
     // Node click
     if (params.nodes.length > 0) {
         var clicked = params.nodes[0];
         activeEdge = null;
         if (activeNode === clicked) { activeNode = null; restoreDefault(); }
-        else                        { activeNode = clicked; applyHighlight(clicked, true); }
+        else { activeNode = clicked; applyHighlight(clicked, true); }
     } else {
         if (activeNode || activeEdge) { activeNode = null; activeEdge = null; restoreDefault(); }
     }
