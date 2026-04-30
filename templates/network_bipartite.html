@@ -316,6 +316,43 @@
 <div id="summary-panel"></div>
 
 <script>
+function toggleDetail(subId) {
+    var row = document.getElementById(subId);
+    if (!row) return;
+    var isOpen = row.style.display !== "none";
+    // Collapse all others first
+    document.querySelectorAll(".s-detail-row").forEach(function(r) {
+        r.style.display = "none";
+        // Reset expand btn arrows
+        var prevRow = r.previousElementSibling;
+        if (prevRow) {
+            var btn = prevRow.querySelector(".s-expand-btn");
+            if (btn) btn.innerHTML = btn.innerHTML.replace("▼", "▶");
+        }
+    });
+    if (!isOpen) {
+        row.style.display = "";
+        // Update arrow on the clicked row
+        var prevRow = row.previousElementSibling;
+        if (prevRow) {
+            var btn = prevRow.querySelector(".s-expand-btn");
+            if (btn) btn.innerHTML = btn.innerHTML.replace("▶", "▼");
+        }
+    }
+}
+function hoverOrg(nodeId) {
+    if (!network || !layoutReady) return;
+    network.selectNodes([nodeId]);
+}
+function unhoverOrg() {
+    if (!network || !layoutReady || activeNode) return;
+    network.unselectAll();
+}
+function toggleEdgeDetail(rowId) {
+    // Edge panel rows are already flat — clicking does nothing extra for now
+    // Reserved for future third-level expansion if needed
+}
+
 function initNetwork() {
 
 // ── Data injected by Python ─────────────────────────────────────────────
@@ -525,6 +562,27 @@ function buildSparkSections() {
 // ── Summary panel ──────────────────────────────────────────────────────────
 var panel = document.getElementById("summary-panel");
 
+// Event delegation for panel rows — handles clicks and hovers on dynamically built HTML
+panel.addEventListener("click", function(e) {
+    var row = e.target.closest(".s-org-row");
+    if (!row) return;
+    var subId = row.dataset.sub;
+    if (subId) toggleDetail(subId);
+});
+
+panel.addEventListener("mouseover", function(e) {
+    var row = e.target.closest(".s-org-row");
+    if (!row) return;
+    var nodeId = row.dataset.node;
+    if (nodeId) hoverOrg(nodeId);
+});
+
+panel.addEventListener("mouseout", function(e) {
+    var row = e.target.closest(".s-org-row");
+    if (!row) return;
+    unhoverOrg();
+});
+
 function typeLabel(id) {
     var m = nodeMeta[id];
     if (!m) return "";
@@ -560,9 +618,7 @@ function buildSummary(nodeId, pinned) {
             // Outer row — colored by org type
             html += '<tr class="s-org-row" style="border-left: 4px solid ' + o.color + ';"' +
                     ' data-node="' + o.id + '"' +
-                    ' onclick="toggleDetail(\'' + subId + '\')" ' +
-                    ' onmouseenter="hoverOrg(\'' + o.id + '\')" ' +
-                    ' onmouseleave="unhoverOrg()">';
+                    ' data-sub="' + subId + '">';
             html += '<td class="s-org-name">' + o.id + '</td>';
             html += '<td class="s-org-type" style="color:' + o.color + ';">' + o.orgType + '</td>';
             html += '<td class="s-org-count" style="text-align:right">' +
@@ -604,9 +660,7 @@ function buildSummary(nodeId, pinned) {
 
             html += '<tr class="s-org-row" style="border-left: 4px solid ' + divColor + ';"' +
                     ' data-node="' + d.id + '"' +
-                    ' onclick="toggleDetail(\'' + subId + '\')" ' +
-                    ' onmouseenter="hoverOrg(\'' + d.id + '\')" ' +
-                    ' onmouseleave="unhoverOrg()">';
+                    ' data-sub="' + subId + '">';
             html += '<td class="s-org-name">' + d.id + '</td>';
             html += '<td class="s-org-count" style="text-align:right">' +
                     '<span class="s-expand-btn">' + d.weight + ' ▶</span></td>';
@@ -633,40 +687,8 @@ function buildSummary(nodeId, pinned) {
     return html;
 }
 
-function toggleDetail(subId) {
-    var row = document.getElementById(subId);
-    if (!row) return;
-    var isOpen = row.style.display !== "none";
-    // Collapse all others first
-    document.querySelectorAll(".s-detail-row").forEach(function(r) {
-        r.style.display = "none";
-        // Reset expand btn arrows
-        var prevRow = r.previousElementSibling;
-        if (prevRow) {
-            var btn = prevRow.querySelector(".s-expand-btn");
-            if (btn) btn.innerHTML = btn.innerHTML.replace("▼", "▶");
-        }
-    });
-    if (!isOpen) {
-        row.style.display = "";
-        // Update arrow on the clicked row
-        var prevRow = row.previousElementSibling;
-        if (prevRow) {
-            var btn = prevRow.querySelector(".s-expand-btn");
-            if (btn) btn.innerHTML = btn.innerHTML.replace("▶", "▼");
-        }
-    }
-}
 
-function hoverOrg(nodeId) {
-    if (!network || !layoutReady) return;
-    network.selectNodes([nodeId]);
-}
 
-function unhoverOrg() {
-    if (!network || !layoutReady || activeNode) return;
-    network.unselectAll();
-}
 
 function buildEdgeSummary(edgeId, pinned) {
     var edge     = visEdges.get(edgeId);
@@ -729,10 +751,6 @@ function buildEdgeSummary(edgeId, pinned) {
     return html;
 }
 
-function toggleEdgeDetail(rowId) {
-    // Edge panel rows are already flat — clicking does nothing extra for now
-    // Reserved for future third-level expansion if needed
-}
 
 // ── Apply / restore highlight ──────────────────────────────────────────────
 function applyHighlight(nodeId, pinned) {
