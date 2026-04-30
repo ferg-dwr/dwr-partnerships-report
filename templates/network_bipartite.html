@@ -154,6 +154,30 @@
     <div style="color:#aaa; font-size:10px; margin-top:6px;">partnerships counted</div>
   </div>
 
+  <!-- Node size legend -->
+  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px;
+              padding:10px 12px; margin-bottom:12px; font-size:11px;">
+    <b style="font-size:12px; color:#084594;">Node Size</b>
+    <div style="margin-top:8px; display:flex; align-items:center; gap:10px; justify-content:space-between;">
+      <div style="text-align:center;">
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="4" fill="#aaa"/>
+        </svg>
+        <div style="color:#888; font-size:10px; margin-top:2px;">fewer</div>
+      </div>
+      <div style="flex:1; height:1px; background:linear-gradient(to right, #ddd, #aaa);"></div>
+      <div style="text-align:center;">
+        <svg width="30" height="30" viewBox="0 0 30 30">
+          <circle cx="15" cy="15" r="10" fill="#aaa"/>
+        </svg>
+        <div style="color:#888; font-size:10px; margin-top:2px;">more</div>
+      </div>
+    </div>
+    <div style="color:#aaa; font-size:10px; margin-top:6px; text-align:center;">
+      Size = total partnerships (1 – {{ max_degree }})
+    </div>
+  </div>
+
   <br>
 
   <b>Organization Type</b>

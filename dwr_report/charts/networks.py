@@ -21,9 +21,6 @@ from dwr_report.ingest.loader import PartnershipData, to_list_if_listlike
 # vis-network CDN reference injected into templates as {{ vis_js_cdn }}
 _VIS_JS_CDN = "https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"
 
-# ---------------------------------------------------------------------------
-# Shared helpers
-# ---------------------------------------------------------------------------
 
 _CATEGORY_PALETTE = [
     "#1E88E5",
@@ -344,35 +341,59 @@ def network_bipartite(
             org_type_colors[ot] = _FALLBACK_COLORS[fi % len(_FALLBACK_COLORS)]
             fi += 1
 
-    DOT_SIZE = 14
+    DOT_SIZE_MIN = 8
+    DOT_SIZE_MAX = 28
     GLOW_COLOR = "#FFD700"
     DIM_COLOR = "#e8e8e8"
 
+    # Node degree = total partnerships per node
+    node_degree: dict[str, int] = {}
+    for _, row in edge_weights.iterrows():
+        d = row[division_col]
+        o = row[org_col]
+        w = int(row["weight"])
+        node_degree[d] = node_degree.get(d, 0) + w
+        node_degree[o] = node_degree.get(o, 0) + w
+
+    max_degree = max(node_degree.values()) if node_degree else 1
+
+    def scale_node(degree: int) -> int:
+        """Scale node size between DOT_SIZE_MIN and DOT_SIZE_MAX by degree."""
+        if max_degree <= 1:
+            return DOT_SIZE_MIN
+        return int(DOT_SIZE_MIN + (DOT_SIZE_MAX - DOT_SIZE_MIN) * (degree - 1) / (max_degree - 1))
+
     nodes = []
     for d in divisions:
+        size = scale_node(node_degree.get(d, 1))
         nodes.append(
             {
                 "id": d,
                 "label": "",
                 "shape": "dot",
+                "size": size,
                 "color": {"background": division_colors[d], "border": division_colors[d]},
                 "font": {"size": 0},
                 "borderWidth": 0,
                 "group": "division",
+                "title": f"{d}<br>{node_degree.get(d, 0)} partnerships",
             }
         )
     for org in orgs:
         org_type = org_type_lookup.get(org, "Other")
         org_color = org_type_colors.get(org_type, "#90A4AE")
+        size = scale_node(node_degree.get(org, 1))
         nodes.append(
             {
                 "id": org,
                 "label": "",
                 "shape": "square",
+                "size": size,
                 "color": {"background": org_color, "border": org_color},
                 "font": {"size": 0},
                 "borderWidth": 0,
                 "group": "org",
+                "title": f"{org}<br>{node_degree.get(org, 0)} partnerships",
             }
         )
 
@@ -456,7 +477,9 @@ def network_bipartite(
             org_type_colors_json=json.dumps(org_type_colors),
             glow_color=GLOW_COLOR,
             dim_color=DIM_COLOR,
-            dot_size=DOT_SIZE,
+            dot_size_min=DOT_SIZE_MIN,
+            dot_size_max=DOT_SIZE_MAX,
+            max_degree=max_degree,
             top_orgs_json=json.dumps(top_orgs),
             top_divisions_json=json.dumps(top_divisions),
         )
