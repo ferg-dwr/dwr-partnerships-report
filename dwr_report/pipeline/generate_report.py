@@ -183,8 +183,7 @@ def _build_network_charts(
             out.write_text(html, encoding="utf-8")
             iframes["network_tripartite"] = (
                 '<iframe src="network_tripartite.html" '
-                'width="100%" height="800px" frameborder="0" '
-                'sandbox="allow-scripts allow-same-origin"></iframe>'
+                'width="100%" height="800px" frameborder="0"></iframe>'
             )
         except Exception as e:
             print(f"  Warning: tripartite network failed — {e}")
@@ -202,8 +201,7 @@ def _build_network_charts(
         out.write_text(html, encoding="utf-8")
         iframes["network_bipartite"] = (
             '<iframe src="network_bipartite.html" '
-            'width="100%" height="800px" frameborder="0" '
-            'sandbox="allow-scripts allow-same-origin"></iframe>'
+            'width="100%" height="800px" frameborder="0"></iframe>'
         )
     except Exception as e:
         print(f"  Warning: bipartite network failed — {e}")

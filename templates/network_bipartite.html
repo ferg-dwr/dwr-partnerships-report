@@ -329,17 +329,17 @@ var network   = new vis.Network(
         physics: {
             enabled: true,
             barnesHut: {
-            gravitationalConstant: -12000,  // back to moderate — strong enough to spread, fast to settle
-            centralGravity:        0.08,   // gentle pull to center keeps graph cohesive
-            springLength:          200,    // shorter springs — spacing comes from repulsion not length
-            springConstant:        0.02,
-            damping:               0.25,    // higher damping = settles faster
+                gravitationalConstant: -12000,
+                centralGravity:        0.08,
+                springLength:          200,
+                springConstant:        0.02,
+                damping:               0.25,
+            },
+            stabilization: { enabled: true, iterations: 150, fit: true },
         },
-        stabilization: { enabled: true, iterations: 150, fit: true },
-        interaction: { hover: true, tooltips: false, dragNodes: true },
-        nodes:       { borderWidth: 0, shadow: false },
-        edges:       { smooth: { type: "continuous" } },
-        },
+        interaction: { hover: true, tooltipDelay: 200, dragNodes: true },
+        nodes:        { borderWidth: 0, shadow: false },
+        edges:        { smooth: { type: "continuous" } },
     }
 );
 
