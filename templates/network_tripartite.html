@@ -8,6 +8,13 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #ffffff; font-family: sans-serif; overflow: hidden; }
+  #network-container {
+    background-color: #ffffff;
+    background-image:
+      linear-gradient(rgba(200,200,210,0.25) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,200,210,0.25) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
   #network-container { width: 100vw; height: 100vh; }
 
   /* ── Floating label layer ── */
@@ -48,19 +55,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   }
 
-  /* ── Column headers ── */
-  .col-header {
-    position: fixed; top: 0px;
-    background: #003366;
-    border: none;
-    border-bottom: 3px solid #C8960C;
-    padding: 6px 16px;
-    font-size: 11px; font-weight: 700;
-    color: white; z-index: 998;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    transform: translateX(-50%);
-  }
+  
 
   /* ── Legend ── */
   #legend {

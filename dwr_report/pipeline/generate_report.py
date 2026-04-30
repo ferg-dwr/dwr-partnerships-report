@@ -237,6 +237,7 @@ def _assemble_html(
       --blue-mid:   #0071BC;
       --blue-light: #E8F0F7;
       --gold:       #C8960C;
+      --gold-dark:  #a67a08;
       --grey:       #D9D9D9;
       --grey-light: #F5F7FA;
       --green:      #2e7d32;
@@ -246,168 +247,159 @@ def _assemble_html(
       --border:     #CCCCCC;
     }}
 
-    * {{ box-sizing: border-box; }}
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
     body {{
       font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-      margin: 0; padding: 0;
       color: var(--text);
-      background: #fff;
+      background: #F0F2F5;
     }}
 
-    /* ── Header ── */
+    /* ════════════════════════════════════════
+       HEADER — full bleed navy block
+    ════════════════════════════════════════ */
     header {{
       background: var(--blue-dark);
-      border-bottom: 5px solid var(--gold);
-      padding: 1.25rem 2rem 1rem;
+      width: 100%;
+    }}
+
+    .header-inner {{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 2rem 0;
+      text-align: center;
     }}
 
     .header-org {{
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: rgba(255,255,255,0.65);
-      font-weight: 400;
-      margin-bottom: 0.3rem;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.6rem;
     }}
 
     h1 {{
       color: white;
-      margin: 0 0 0.5rem;
-      font-size: 2rem;
+      font-size: 2.4rem;
       font-weight: 900;
       font-family: Arial Black, Arial, sans-serif;
       letter-spacing: -0.01em;
       line-height: 1.1;
+      margin-bottom: 0.5rem;
     }}
 
     .header-meta {{
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      margin-top: 0.25rem;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }}
 
     .generated-at {{
-      color: rgba(255,255,255,0.6);
-      font-size: 0.78rem;
-      flex: 1;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.72rem;
+      font-style: italic;
     }}
 
-    /* ── Nav tabs in header ── */
+    /* ── SaaS grid nav — full width strip ── */
     .header-nav {{
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-      margin-top: 0.75rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      width: 100%;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      margin-top: 0.25rem;
     }}
 
     .header-nav a {{
-      padding: 0.3rem 0.8rem;
-      background: rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.85);
-      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.9rem 1rem;
       text-decoration: none;
-      font-size: 0.78rem;
-      font-weight: 600;
-      border: 1px solid rgba(255,255,255,0.2);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.65);
+      border-right: 1px solid rgba(255,255,255,0.1);
       transition: all 0.15s;
-      white-space: nowrap;
+      text-align: center;
+      letter-spacing: 0.01em;
     }}
     .header-nav a:hover {{
-      background: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.1);
       color: white;
-      border-color: rgba(255,255,255,0.4);
     }}
-
-    .btn-update {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.4rem 1rem;
+    .header-nav a.active {{
+      background: var(--blue-mid);
+      color: white;
+    }}
+    .header-nav .nav-upload {{
       background: var(--gold);
       color: white;
-      border-radius: 3px;
-      text-decoration: none;
-      font-size: 0.78rem;
+      border-right: none;
       font-weight: 700;
-      white-space: nowrap;
-      transition: background 0.15s;
-      flex-shrink: 0;
-      letter-spacing: 0.02em;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.78rem;
     }}
-    .btn-update:hover {{ background: #a67a08; }}
+    .header-nav .nav-upload:hover {{
+      background: var(--gold-dark);
+      color: white;
+    }}
 
-    /* ── Floating TOC ── */
+    /* ── Floating TOC — right of chart-section ── */
     #floating-toc {{
       position: fixed;
-      left: 1rem;
+      left: calc(50% + 620px);
       top: 50%;
       transform: translateY(-50%);
       z-index: 900;
-      display: flex;
+      display: none;
       flex-direction: column;
-      gap: 0.3rem;
+      gap: 0.35rem;
     }}
 
     .toc-item {{
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 0.75rem;
-      background: rgba(255,255,255,0.95);
+      display: block;
+      padding: 0.5rem 0.9rem;
+      background: white;
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 5px;
       text-decoration: none;
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--blue-dark);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
       transition: all 0.15s;
       white-space: nowrap;
-    }}
-    .toc-item::before {{
-      content: "";
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--grey);
-      flex-shrink: 0;
-      transition: background 0.15s;
+      text-align: right;
     }}
     .toc-item:hover, .toc-item.active {{
       background: var(--blue-dark);
       color: white;
       border-color: var(--blue-dark);
     }}
-    .toc-item:hover::before, .toc-item.active::before {{
-      background: var(--gold);
-    }}
 
     /* ── Main content ── */
     .main-content {{
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1.5rem 2rem 3rem 2rem;
+      padding: 1.75rem 2rem 3rem;
     }}
 
     /* ── Diff summary ── */
     .diff-summary {{
-      background: var(--blue-light);
+      background: white;
+      border: 1px solid var(--border);
       border-left: 4px solid var(--blue-mid);
-      border-radius: 4px;
+      border-radius: 6px;
       padding: 1.25rem 1.5rem;
       margin-bottom: 2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }}
-    .diff-summary h2 {{ margin: 0 0 0.75rem; font-size: 1rem; color: var(--blue-dark); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }}
+    .diff-summary h2 {{ font-size: 0.75rem; color: var(--blue-dark); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.75rem; }}
     .diff-stats {{ display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }}
-    .stat {{
-      padding: 0.3rem 0.75rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.875rem;
-    }}
+    .stat {{ padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.875rem; }}
     .stat--new     {{ background: #c8e6c9; color: var(--green); }}
     .stat--removed {{ background: #ffcdd2; color: var(--red); }}
     .stat--changed {{ background: #fff3e0; color: var(--orange); }}
@@ -418,7 +410,7 @@ def _assemble_html(
     .banner ul {{ margin: 0.5rem 0 0; padding-left: 1.25rem; }}
 
     .changes-section {{ margin-top: 1rem; }}
-    .changes-section h3 {{ font-size: 0.85rem; color: var(--blue-dark); margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.04em; }}
+    .changes-section h3 {{ font-size: 0.72rem; color: var(--blue-dark); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }}
     .change-card {{ margin: 0.4rem 0; border: 1px solid var(--grey); border-radius: 4px; overflow: hidden; }}
     .change-card summary {{ cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.9rem; background: white; user-select: none; list-style: none; }}
     .change-card summary::-webkit-details-marker {{ display: none; }}
@@ -437,49 +429,58 @@ def _assemble_html(
     .change-table tr:hover td {{ background: #fafafa; }}
 
     /* ── Chart sections ── */
-    .chart-section {{ margin-bottom: 3rem; scroll-margin-top: 1.5rem; }}
+    .chart-section {{
+      margin-bottom: 2rem;
+      scroll-margin-top: 1.5rem;
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }}
     .chart-section h2 {{
       color: var(--blue-dark);
       font-family: Arial Black, Arial, sans-serif;
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 900;
       border-bottom: 2px solid var(--gold);
       padding-bottom: 0.5rem;
       margin-bottom: 0.75rem;
-      letter-spacing: -0.01em;
     }}
     .chart-context {{
-      font-size: 0.85rem;
-      color: #555;
-      line-height: 1.6;
+      font-size: 0.82rem;
+      color: #666;
+      line-height: 1.65;
       margin-bottom: 1rem;
-      padding: 0.75rem 1rem;
+      padding: 0.65rem 1rem;
       background: var(--blue-light);
       border-left: 3px solid var(--blue-mid);
       border-radius: 0 4px 4px 0;
     }}
     .chart-missing {{ color: #888; font-style: italic; padding: 1rem; background: var(--grey); border-radius: 4px; }}
-    iframe {{ border-radius: 4px; display: block; border: 1px solid var(--border); }}
+    iframe {{ border-radius: 6px; display: block; border: 1px solid var(--border); }}
   </style>
 </head>
 <body>
   <header>
-    <div class="header-org">California Department of Water Resources &nbsp;·&nbsp; Science &amp; Technology Partnerships</div>
-    <h1>DWR Partnerships Report</h1>
-    <div class="header-meta">
-      <span class="generated-at">Generated {generated_at}</span>
-      <a href="upload-ui/" class="btn-update">⬆ Update Data</a>
+    <div class="header-inner">
+      <div class="header-org">California Department of Water Resources</div>
+      <h1>Internal Partnerships Report</h1>
+      <div class="header-meta">
+        <span class="generated-at">Last updated {generated_at}</span>
+      </div>
     </div>
-    <nav class="header-nav">
-      <a href="#treemap-coverage">Coverage Gaps</a>
-      <a href="#network-tripartite">Organizaitonal Network: Science, Staff, and Structure</a>
-      <a href="#network-bipartite">DWR and Partner Organizations</a>
+    <nav class="header-nav" id="header-nav">
+      <a href="#treemap-coverage">Science Coverage Gaps</a>
+      <a href="#network-tripartite">Organizational Network</a>
+      <a href="#network-bipartite">Division &amp; Partner Network</a>
+      <a href="upload-ui/" class="nav-upload">⬆ Upload Data</a>
     </nav>
   </header>
 
-  <!-- Floating TOC -->
+  <!-- Floating TOC — shown when header nav scrolls out of view -->
   <nav id="floating-toc">
-    <a href="#treemap-coverage"   class="toc-item">Coverage Gaps</a>
+    <a href="#treemap-coverage"   class="toc-item">Science Gaps</a>
     <a href="#network-tripartite" class="toc-item">Science Network</a>
     <a href="#network-bipartite"  class="toc-item">Partner Network</a>
   </nav>
@@ -497,7 +498,7 @@ def _assemble_html(
   </div>
 
   <div class="chart-section" id="network-tripartite">
-    <h2>Organizaitonal Network: Science, Staff, and Structure</h2>
+    <h2>Organizational Network: Science, Staff, and Structure</h2>
     <p class="chart-context">
       Use this network to explore how DWR staff connect science and technology fields
       to divisions, offices, and branches. Each node represents a science field (left),
@@ -525,26 +526,34 @@ def _assemble_html(
   </div>
 
   <script>
-    // ── Floating TOC active section tracking ──
-    var tocItems = document.querySelectorAll('.toc-item');
-    var sections = ['treemap-coverage', 'network-tripartite', 'network-bipartite']
-      .map(function(id) {{ return document.getElementById(id); }})
-      .filter(Boolean);
+    var tocItems    = document.querySelectorAll('.toc-item');
+    var headerLinks = document.querySelectorAll('.header-nav a:not(.nav-upload)');
+    var floatingToc = document.getElementById('floating-toc');
+    var headerNav   = document.getElementById('header-nav');
+    var sections    = ['treemap-coverage', 'network-tripartite', 'network-bipartite']
+      .map(function(id) {{ return document.getElementById(id); }}).filter(Boolean);
 
-    function updateToc() {{
+    function getActiveId() {{
       var scrollY = window.scrollY + window.innerHeight * 0.3;
-      var active = sections[0];
-      sections.forEach(function(s) {{
-        if (s.offsetTop <= scrollY) active = s;
-      }});
+      var active  = sections[0];
+      sections.forEach(function(s) {{ if (s && s.offsetTop <= scrollY) active = s; }});
+      return active ? active.id : '';
+    }}
+
+    function updateNav() {{
+      var headerBottom = headerNav ? headerNav.getBoundingClientRect().bottom : 0;
+      floatingToc.style.display = headerBottom < 0 ? 'flex' : 'none';
+      var activeId = getActiveId();
       tocItems.forEach(function(a) {{
-        var href = a.getAttribute('href').slice(1);
-        a.classList.toggle('active', href === active.id);
+        a.classList.toggle('active', a.getAttribute('href').slice(1) === activeId);
+      }});
+      headerLinks.forEach(function(a) {{
+        a.classList.toggle('active', a.getAttribute('href').slice(1) === activeId);
       }});
     }}
 
-    window.addEventListener('scroll', updateToc, {{ passive: true }});
-    updateToc();
+    window.addEventListener('scroll', updateNav, {{ passive: true }});
+    updateNav();
   </script>
 </body>
 </html>"""

@@ -8,6 +8,13 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #ffffff; font-family: sans-serif; overflow: hidden; }
+  #network-container {
+    background-color: #ffffff;
+    background-image:
+      linear-gradient(rgba(200,200,210,0.25) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,200,210,0.25) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
   #network-container { width: 100vw; height: 100vh; }
 
   /* ── Floating label layer ── */
@@ -161,8 +168,9 @@
 
 <!-- Legend -->
 <div id="legend" style="display:none;">
-  <b style="font-size:13px;">DWR Division <-> Partner Organization Network</b><br>
-  <span style="font-size:10px;color:#888;">Edge width = # partnerships · Drag nodes freely</span>
+  <b style="font-size:13px;">DWR and Partner Org Network</b><br>
+  <span style="font-size:10px;color:#888;">Edge stroke width = No. partnerships</span>
+  <span style="font-size:10px;color:#888;">Drag nodes freely</span>
   <br><br>
 
   <!-- Summary panel — populated from static data injected at report time -->
