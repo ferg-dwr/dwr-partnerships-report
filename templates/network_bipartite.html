@@ -7,7 +7,7 @@
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f8f9fa; font-family: sans-serif; overflow: hidden; }
+  body { background: #ffffff; font-family: sans-serif; overflow: hidden; }
   #network-container { width: 100vw; height: 100vh; }
 
   /* ── Floating label layer ── */
@@ -94,6 +94,46 @@
   #summary-panel .s-pin     { font-size: 10px; color: #aaa; margin-top: 12px;
                                border-top: 1px solid #eee; padding-top: 8px; }
 
+  /* Expandable org table */
+  .s-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; }
+  .s-table th { text-align: left; padding: 4px 6px; background: #f0f4f8;
+                color: #084594; font-size: 10px; border-bottom: 1px solid #ddd; }
+  .s-org-row { cursor: pointer; transition: background 0.1s; }
+  .s-org-row:hover { background: #f5f8ff; }
+  .s-org-row td { padding: 5px 6px; border-bottom: 1px solid #f0f0f0;
+                  vertical-align: middle; }
+  .s-org-name { font-weight: 600; font-size: 11px; word-break: break-word; }
+  .s-org-type { font-size: 10px; }
+  .s-org-count { font-size: 11px; white-space: nowrap; }
+  .s-expand-btn { cursor: pointer; font-size: 10px; color: #6BAED6;
+                  background: #eef4fb; border-radius: 3px; padding: 1px 5px; }
+
+  /* Nested detail table */
+  .s-detail-row td { padding: 0; background: #fafbfd; }
+  .s-detail-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .s-detail-table th { padding: 3px 6px; background: #e8eef5; color: #555;
+                       font-weight: 600; border-bottom: 1px solid #ddd; }
+  .s-detail-table td { padding: 4px 6px; border-bottom: 1px solid #eee;
+                       vertical-align: top; word-break: break-word; }
+  .s-detail-table tr:last-child td { border-bottom: none; }
+
+  /* Edge click — side-by-side entity header */
+  .s-edge-header { display: flex; align-items: stretch; gap: 6px;
+                   margin-bottom: 10px; }
+  .s-edge-entity { flex: 1; display: flex; align-items: center; gap: 8px;
+                   padding: 8px 10px; border-radius: 6px;
+                   border: 1.5px solid transparent; }
+  .s-edge-dot    { width: 12px; height: 12px; border-radius: 50%;
+                   flex-shrink: 0; }
+  .s-edge-label  { flex: 1; min-width: 0; }
+  .s-edge-name   { font-weight: 700; font-size: 11px; word-break: break-word;
+                   line-height: 1.3; }
+  .s-edge-type   { font-size: 10px; color: #888; margin-top: 2px; }
+  .s-edge-connector { font-size: 18px; color: #ccc; display: flex;
+                      align-items: center; flex-shrink: 0; }
+  .s-edge-count  { font-size: 11px; color: #666; margin-bottom: 4px;
+                   padding-bottom: 8px; border-bottom: 1px solid #eee; }
+
   /* ── Stabilizing overlay ── */
   #loading-overlay {
     position: fixed; inset: 0;
@@ -131,27 +171,36 @@
     padding:10px 12px; margin-bottom:12px; font-size:11px;">
 
     <b style="font-size:12px; color:#084594;">Top Partner Organizations</b>
-    <div id="top-orgs-list" style="margin:6px 0 10px;">
+    <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin:3px 0 4px;">
+      <span>Organization</span><span>Partnerships</span>
+    </div>
+    <div id="top-orgs-list" style="margin:0 0 10px;">
       {% for org in top_orgs %}
       <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
         <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
               title="{{ org.name }}">{{ org.name }}</span>
-        <span style="color:#6BAED6; font-weight:600; margin-left:8px;">{{ org.connections }}</span>
+        <span style="color:#6BAED6; font-weight:600; margin-left:8px; white-space:nowrap;">
+          {{ org.connections }} 🤝
+        </span>
       </div>
       {% endfor %}
     </div>
 
     <b style="font-size:12px; color:#084594;">Top DWR Divisions</b>
-    <div id="top-divisions-list" style="margin:6px 0 0;">
+    <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin:3px 0 4px;">
+      <span>Division</span><span>Partnerships</span>
+    </div>
+    <div id="top-divisions-list" style="margin:0;">
       {% for div in top_divisions %}
       <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
         <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
               title="{{ div.name }}">{{ div.name }}</span>
-        <span style="color:#FFB74D; font-weight:600; margin-left:8px;">{{ div.connections }}</span>
+        <span style="color:#FFB74D; font-weight:600; margin-left:8px; white-space:nowrap;">
+          {{ div.connections }} 🤝
+        </span>
       </div>
       {% endfor %}
     </div>
-    <div style="color:#aaa; font-size:10px; margin-top:6px;">partnerships counted</div>
   </div>
 
   <!-- Node size legend -->
@@ -277,6 +326,8 @@ var edgeIndex         = {"DRA \u2013 North Central Region|Bayshore Climate Colle
 var nodeMeta          = {"DRA \u2013 North Central Region": {"type": "division", "color": "#607D8B"}, "DRA \u2013 Regional Assistance": {"type": "division", "color": "#546E7A"}, "DRA \u2013 Southern Region": {"type": "division", "color": "#455A64"}, "DRA \u2013 Water Use Efficiency": {"type": "division", "color": "#37474F"}, "Executive": {"type": "division", "color": "#263238"}, "Flood Operations": {"type": "division", "color": "#78909C"}, "Healthy Rivers and Landscapes": {"type": "division", "color": "#90A4AE"}, "Multibenefit Initiatives": {"type": "division", "color": "#B0BEC5"}, "Planning": {"type": "division", "color": "#4DB6AC"}, "Public Affairs Office": {"type": "division", "color": "#26A69A"}, "SWP \u2013 Engineering": {"type": "division", "color": "#00897B"}, "SWP \u2013 Integrated Science and Engineering": {"type": "division", "color": "#00796B"}, "SWP \u2013 Modeling Support": {"type": "division", "color": "#00695C"}, "Sustainable Groundwater Management": {"type": "division", "color": "#004D40"}, "Acme Water Research Institute": {"type": "org", "color": "#3949AB", "orgType": "Tribe"}, "Alpine Watershed Institute": {"type": "org", "color": "#D81B60", "orgType": "Non-profit"}, "Bay Area Water Authority": {"type": "org", "color": "#00ACC1", "orgType": "NGO"}, "Bayshore Climate Collective": {"type": "org", "color": "#E53935", "orgType": "Federal agency or department"}, "Blue River University": {"type": "org", "color": "#F4511E", "orgType": "Network/ Collaborative"}, "Cascade Environmental Labs": {"type": "org", "color": "#FB8C00", "orgType": "Public/Private"}, "Central Valley Tech": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Coastline Data Partners": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Delta Science Consortium": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Dryland Research Network": {"type": "org", "color": "#3949AB", "orgType": "Tribe"}, "Eastbay Environmental Group": {"type": "org", "color": "#E53935", "orgType": "Federal agency or department"}, "Fenland Hydrology Group": {"type": "org", "color": "#1E88E5", "orgType": "University"}, "Golden State Hydrology Center": {"type": "org", "color": "#43A047", "orgType": "State agency or department"}, "Great Basin Water Network": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Harbor Water Solutions": {"type": "org", "color": "#43A047", "orgType": "State agency or department"}, "Heritage River Trust": {"type": "org", "color": "#43A047", "orgType": "State agency or department"}, "Highplains Research Network": {"type": "org", "color": "#8E24AA", "orgType": "Public Research Lab"}, "Inland Watershed Lab": {"type": "org", "color": "#00ACC1", "orgType": "NGO"}, "Integrated Water Systems Inc": {"type": "org", "color": "#1E88E5", "orgType": "University"}, "Junction Climate Institute": {"type": "org", "color": "#E53935", "orgType": "Federal agency or department"}, "Kelp Forest Alliance": {"type": "org", "color": "#1E88E5", "orgType": "University"}, "Klamath River Studies Group": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Lakeside Data Systems": {"type": "org", "color": "#43A047", "orgType": "State agency or department"}, "Marsh Edge Collaborative": {"type": "org", "color": "#D81B60", "orgType": "Non-profit"}, "Mountain Hydro Solutions": {"type": "org", "color": "#43A047", "orgType": "State agency or department"}, "Oasis Water Technology": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Oceanic Flow Technologies": {"type": "org", "color": "#E53935", "orgType": "Federal agency or department"}, "Pinecrest Ecology Group": {"type": "org", "color": "#1E88E5", "orgType": "University"}, "Quail Valley Environmental": {"type": "org", "color": "#8E24AA", "orgType": "Public Research Lab"}, "Redwood Basin Monitoring": {"type": "org", "color": "#E53935", "orgType": "Federal agency or department"}, "Riparian Edge Institute": {"type": "org", "color": "#E53935", "orgType": "Federal agency or department"}, "Saltmarsh Science Network": {"type": "org", "color": "#00ACC1", "orgType": "NGO"}, "Sierra Nevada Research Hub": {"type": "org", "color": "#F4511E", "orgType": "Network/ Collaborative"}, "Tidal Marsh Collaborative": {"type": "org", "color": "#6D4C41", "orgType": "Local or Regional agency"}, "Western Watershed Council": {"type": "org", "color": "#00ACC1", "orgType": "NGO"}};
 var divisionIds       = ["DRA \u2013 North Central Region", "DRA \u2013 Regional Assistance", "DRA \u2013 Southern Region", "DRA \u2013 Water Use Efficiency", "Executive", "Flood Operations", "Healthy Rivers and Landscapes", "Multibenefit Initiatives", "Planning", "Public Affairs Office", "SWP \u2013 Engineering", "SWP \u2013 Integrated Science and Engineering", "SWP \u2013 Modeling Support", "Sustainable Groundwater Management"];
 var orgTypeColorsData = {"Federal agency or department": "#E53935", "Local or Regional agency": "#6D4C41", "NGO": "#00ACC1", "Network/ Collaborative": "#F4511E", "Non-profit": "#D81B60", "Public Research Lab": "#8E24AA", "Public/Private": "#FB8C00", "State agency or department": "#43A047", "Tribe": "#3949AB", "University": "#1E88E5"};
+var partnershipDetails = {{ partnership_details_json | tojson }};
+var orgTypeCounts      = {{ org_type_counts_json | tojson }};
 var GLOW              = "#FFD700";
 var DIM               = "#e8e8e8";
 var BASE_SIZE         = 14;
@@ -352,6 +403,20 @@ visNodes.update(nodesData.map(function(n) {
 network.on("stabilizationIterationsDone", function() {
     network.setOptions({ physics: { enabled: false } });
     layoutReady = true;
+
+    // Inject org type counts into legend
+    document.querySelectorAll(".org-type-label").forEach(function(el) {
+        var ot    = el.dataset.orgType;
+        var count = orgTypeCounts[ot] || 0;
+        if (count > 0) {
+            var badge = document.createElement("span");
+            badge.textContent = count;
+            badge.style.cssText = "float:right; background:#eef; color:#555; " +
+                                  "border-radius:8px; padding:0 5px; font-size:10px; " +
+                                  "font-weight:600; margin-left:4px;";
+            el.appendChild(badge);
+        }
+    });
 
     document.getElementById("loading-overlay").style.display = "none";
     document.getElementById("legend").style.display = "block";
@@ -470,22 +535,57 @@ function typeLabel(id) {
 function buildSummary(nodeId, pinned) {
     var neighbors = adjacency[nodeId] || [];
     var meta      = nodeMeta[nodeId]  || {};
-    var html      = '<div class="s-title">'   + nodeId + '</div>';
-    html         += '<span class="s-type">'   + typeLabel(nodeId) + '</span>';
+    var html      = '<div class="s-title">' + nodeId + '</div>';
+    html         += '<span class="s-type">' + typeLabel(nodeId) + '</span>';
     html         += '<span class="s-degree">' + (nodeDegree[nodeId]||0) + ' connections</span>';
 
     if (meta.type === "division") {
         var orgsW = neighbors.map(function(o) {
             var info = edgeIndex[nodeId+"|"+o] || edgeIndex[o+"|"+nodeId] || {};
-            return { id: o, weight: info.weight||1, orgType: (nodeMeta[o]||{}).orgType||"" };
+            var m2   = nodeMeta[o] || {};
+            var color = orgTypeColorsData[m2.orgType] || "#aaa";
+            return { id: o, weight: info.weight||1, orgType: m2.orgType||"", color: color };
         }).sort(function(a,b) { return b.weight - a.weight; });
 
         html += '<div class="s-section">Partner Organizations (' + orgsW.length + ')</div>';
+        html += '<table class="s-table"><thead><tr>' +
+                '<th>Organization</th><th>Type</th><th style="text-align:right">Partnerships</th>' +
+                '</tr></thead><tbody>';
         orgsW.forEach(function(o) {
-            html += '<div class="s-item">● ' + o.id +
-                    '<span class="s-weight">(' + o.weight + ' partnership' + (o.weight>1?'s':'') + ')</span></div>';
-            html += '<div class="s-sub">' + o.orgType + '</div>';
+            var detailKey = nodeId + "|" + o.id;
+            var details   = partnershipDetails[detailKey] || [];
+            var rowId     = "row-" + detailKey.replace(/[^a-z0-9]/gi, "_");
+            var subId     = "sub-" + detailKey.replace(/[^a-z0-9]/gi, "_");
+
+            // Outer row — colored by org type
+            html += '<tr class="s-org-row" style="border-left: 4px solid ' + o.color + ';"' +
+                    ' data-node="' + o.id + '"' +
+                    ' onclick="toggleDetail(\'' + subId + '\')" ' +
+                    ' onmouseenter="hoverOrg(\'' + o.id + '\')" ' +
+                    ' onmouseleave="unhoverOrg()">';
+            html += '<td class="s-org-name">' + o.id + '</td>';
+            html += '<td class="s-org-type" style="color:' + o.color + ';">' + o.orgType + '</td>';
+            html += '<td class="s-org-count" style="text-align:right">' +
+                    '<span class="s-expand-btn">' + o.weight + ' ▶</span></td>';
+            html += '</tr>';
+
+            // Nested detail rows (hidden by default)
+            html += '<tr id="' + subId + '" class="s-detail-row" style="display:none;">';
+            html += '<td colspan="3" style="padding:0;">';
+            html += '<table class="s-detail-table">';
+            html += '<thead><tr><th>Contact</th><th>Program(s)</th><th>Status</th><th>Science Fields</th></tr></thead><tbody>';
+            details.forEach(function(d) {
+                html += '<tr>';
+                html += '<td>' + (d.contact  || "—") + '</td>';
+                html += '<td>' + (d.programs || "—") + '</td>';
+                html += '<td>' + (d.status   || "—") + '</td>';
+                html += '<td>' + (d.fields   || "—") + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></td></tr>';
         });
+        html += '</tbody></table>';
+
     } else {
         var divsW = neighbors.map(function(d) {
             var info = edgeIndex[nodeId+"|"+d] || edgeIndex[d+"|"+nodeId] || {};
@@ -493,14 +593,79 @@ function buildSummary(nodeId, pinned) {
         }).sort(function(a,b) { return b.weight - a.weight; });
 
         html += '<div class="s-section">DWR Divisions (' + divsW.length + ')</div>';
+        html += '<table class="s-table"><thead><tr>' +
+                '<th>Division</th><th style="text-align:right">Partnerships</th>' +
+                '</tr></thead><tbody>';
         divsW.forEach(function(d) {
-            html += '<div class="s-item">● ' + d.id +
-                    '<span class="s-weight">(' + d.weight + ' partnership' + (d.weight>1?'s':'') + ')</span></div>';
+            var detailKey = d.id + "|" + nodeId;
+            var details   = partnershipDetails[detailKey] || [];
+            var subId     = "sub-" + detailKey.replace(/[^a-z0-9]/gi, "_");
+            var divColor  = (nodeMeta[d.id]||{}).color || "#607D8B";
+
+            html += '<tr class="s-org-row" style="border-left: 4px solid ' + divColor + ';"' +
+                    ' data-node="' + d.id + '"' +
+                    ' onclick="toggleDetail(\'' + subId + '\')" ' +
+                    ' onmouseenter="hoverOrg(\'' + d.id + '\')" ' +
+                    ' onmouseleave="unhoverOrg()">';
+            html += '<td class="s-org-name">' + d.id + '</td>';
+            html += '<td class="s-org-count" style="text-align:right">' +
+                    '<span class="s-expand-btn">' + d.weight + ' ▶</span></td>';
+            html += '</tr>';
+
+            html += '<tr id="' + subId + '" class="s-detail-row" style="display:none;">';
+            html += '<td colspan="2" style="padding:0;">';
+            html += '<table class="s-detail-table">';
+            html += '<thead><tr><th>Contact</th><th>Program(s)</th><th>Status</th><th>Science Fields</th></tr></thead><tbody>';
+            details.forEach(function(d2) {
+                html += '<tr>';
+                html += '<td>' + (d2.contact  || "—") + '</td>';
+                html += '<td>' + (d2.programs || "—") + '</td>';
+                html += '<td>' + (d2.status   || "—") + '</td>';
+                html += '<td>' + (d2.fields   || "—") + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></td></tr>';
         });
+        html += '</tbody></table>';
     }
 
     if (pinned) html += '<div class="s-pin">📌 Pinned — click node or canvas to unpin</div>';
     return html;
+}
+
+function toggleDetail(subId) {
+    var row = document.getElementById(subId);
+    if (!row) return;
+    var isOpen = row.style.display !== "none";
+    // Collapse all others first
+    document.querySelectorAll(".s-detail-row").forEach(function(r) {
+        r.style.display = "none";
+        // Reset expand btn arrows
+        var prevRow = r.previousElementSibling;
+        if (prevRow) {
+            var btn = prevRow.querySelector(".s-expand-btn");
+            if (btn) btn.innerHTML = btn.innerHTML.replace("▼", "▶");
+        }
+    });
+    if (!isOpen) {
+        row.style.display = "";
+        // Update arrow on the clicked row
+        var prevRow = row.previousElementSibling;
+        if (prevRow) {
+            var btn = prevRow.querySelector(".s-expand-btn");
+            if (btn) btn.innerHTML = btn.innerHTML.replace("▶", "▼");
+        }
+    }
+}
+
+function hoverOrg(nodeId) {
+    if (!network || !layoutReady) return;
+    network.selectNodes([nodeId]);
+}
+
+function unhoverOrg() {
+    if (!network || !layoutReady || activeNode) return;
+    network.unselectAll();
 }
 
 function buildEdgeSummary(edgeId, pinned) {
@@ -510,29 +675,63 @@ function buildEdgeSummary(edgeId, pinned) {
     var toMeta   = nodeMeta[edge.to]   || {};
     var divId    = fromMeta.type === "division" ? edge.from : edge.to;
     var orgId    = fromMeta.type === "org"      ? edge.from : edge.to;
-    var info     = edgeIndex[divId+"|"+orgId] || edgeIndex[orgId+"|"+divId] || {};
-    var weight   = info.weight || 1;
+    var orgMeta  = nodeMeta[orgId] || {};
+    var divMeta  = nodeMeta[divId] || {};
+    var divColor = divMeta.color  || "#607D8B";
+    var orgColor = orgTypeColorsData[orgMeta.orgType] || "#90A4AE";
 
-    var html  = '<div class="s-title">' + orgId + '</div>';
-    html     += '<span class="s-type">' + ((nodeMeta[orgId]||{}).orgType||"Organization") + '</span>';
-    html     += '<div class="s-section">↔ ' + divId + '</div>';
-    html     += '<div class="s-item">' + weight + ' partnership' + (weight>1?'s':'') + ' together</div>';
+    var details  = partnershipDetails[divId+"|"+orgId]
+                || partnershipDetails[orgId+"|"+divId]
+                || [];
+    var weight   = details.length || ((edgeIndex[divId+"|"+orgId]||{}).weight||1);
 
-    var otherDivs = (adjacency[orgId]||[]).filter(function(d) { return d !== divId; });
-    if (otherDivs.length > 0) {
-        html += '<div class="s-section">Also partners with (' + otherDivs.length + ' other division' + (otherDivs.length>1?'s':'') + ')</div>';
-        otherDivs.forEach(function(d) { html += '<div class="s-item">● ' + d + '</div>'; });
-    }
+    // ── Side-by-side entity header ──────────────────────────────────────
+    var html = '<div class="s-edge-header">';
+    html += '<div class="s-edge-entity" style="border-color:' + divColor + ';background:' + divColor + '18;">';
+    html += '<div class="s-edge-dot" style="background:' + divColor + ';"></div>';
+    html += '<div class="s-edge-label"><div class="s-edge-name">' + divId + '</div>';
+    html += '<div class="s-edge-type">DWR Division</div></div>';
+    html += '</div>';
 
-    var otherOrgs = (adjacency[divId]||[]).filter(function(o) { return o !== orgId; });
-    if (otherOrgs.length > 0) {
-        html += '<div class="s-section">' + divId + ' also works with (' + otherOrgs.length + ')</div>';
-        otherOrgs.slice(0,5).forEach(function(o) { html += '<div class="s-item">● ' + o + '</div>'; });
-        if (otherOrgs.length > 5) html += '<div class="s-sub">…and ' + (otherOrgs.length-5) + ' more</div>';
+    html += '<div class="s-edge-connector">↔</div>';
+
+    html += '<div class="s-edge-entity" style="border-color:' + orgColor + ';background:' + orgColor + '18;">';
+    html += '<div class="s-edge-dot" style="background:' + orgColor + ';border-radius:2px;"></div>';
+    html += '<div class="s-edge-label"><div class="s-edge-name">' + orgId + '</div>';
+    html += '<div class="s-edge-type">' + (orgMeta.orgType||"Organization") + '</div></div>';
+    html += '</div>';
+    html += '</div>';
+
+    // ── Partnership count ────────────────────────────────────────────────
+    html += '<div class="s-edge-count">' + weight +
+            ' partnership' + (weight !== 1 ? 's' : '') + '</div>';
+
+    // ── Expandable partnership detail table ──────────────────────────────
+    if (details.length > 0) {
+        html += '<table class="s-table" style="margin-top:8px;">';
+        html += '<thead><tr>' +
+                '<th>Contact</th><th>Program(s)</th><th>Status</th><th>Science Fields</th>' +
+                '</tr></thead><tbody>';
+
+        details.forEach(function(d, i) {
+            var rowId = "edge-detail-" + edgeId + "-" + i;
+            html += '<tr class="s-org-row" onclick="toggleEdgeDetail(\'' + rowId + '\')">';
+            html += '<td class="s-org-name">' + (d.contact  || "—") + '</td>';
+            html += '<td>' + (d.programs || "—") + '</td>';
+            html += '<td>' + (d.status   || "—") + '</td>';
+            html += '<td>' + (d.fields   || "—") + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
     }
 
     if (pinned) html += '<div class="s-pin">📌 Pinned — click edge or canvas to unpin</div>';
     return html;
+}
+
+function toggleEdgeDetail(rowId) {
+    // Edge panel rows are already flat — clicking does nothing extra for now
+    // Reserved for future third-level expansion if needed
 }
 
 // ── Apply / restore highlight ──────────────────────────────────────────────

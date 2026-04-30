@@ -308,11 +308,27 @@ def network_bipartite(
     division_col = "DWR Division/ Office/ Branch"
     org_col = "Partnership Organization Name"
     org_type_col = "Organization Type"
+    contact_col = "Main DWR Point of Contact"
+    program_col = "Relevant DWR Program(s) and/ or Project(s)"
+    status_col = "Status of Partnership"
+    fields_col = "Science and Technology Fields"
 
-    df = data.df[[division_col, org_col, org_type_col]].copy()
-    df[org_col] = df[org_col].map(to_list_if_listlike)
-    df[org_type_col] = df[org_type_col].map(to_list_if_listlike)
-    # division_col is a plain string in Microsoft Lists exports — no explosion needed
+    # Pull in all detail columns for the nested partnership table
+    detail_cols = [
+        division_col,
+        org_col,
+        org_type_col,
+        contact_col,
+        program_col,
+        status_col,
+        fields_col,
+    ]
+    available = [c for c in detail_cols if c in data.df.columns]
+    df = data.df[available].copy()
+
+    for col in [org_col, org_type_col, program_col, status_col, fields_col]:
+        if col in df.columns:
+            df[col] = df[col].map(to_list_if_listlike)
 
     df = df.explode(org_col).explode(org_type_col)
     df = df.dropna(subset=[division_col, org_col])
@@ -438,6 +454,29 @@ def network_bipartite(
         org_color = org_type_colors.get(org_type, "#90A4AE")
         node_meta[org] = {"type": "org", "color": org_color, "orgType": org_type}
 
+    # --- Partnership detail lookup: {div|org: [{contact, programs, status, fields}]} ---
+    partnership_details: dict[str, list[dict]] = {}
+    for _, row in df.iterrows():
+        div = str(row[division_col]).strip()
+        org = str(row.get(org_col, "")).strip()
+        if not div or not org:
+            continue
+        key = f"{div}|{org}"
+
+        def _clean(val: object) -> str:
+            v = to_list_if_listlike(val)
+            if isinstance(v, list):
+                return ", ".join(str(i).strip() for i in v if str(i).strip())
+            return str(val).strip() if val and str(val).strip() not in ("nan", "") else ""
+
+        entry = {
+            "contact": _clean(row.get(contact_col, "")),
+            "programs": _clean(row.get(program_col, "")),
+            "status": _clean(row.get(status_col, "")),
+            "fields": _clean(row.get(fields_col, "")),
+        }
+        partnership_details.setdefault(key, []).append(entry)
+
     # --- Top organizations summary (static, generated at report time) ---
     # Top partner orgs by number of DWR division connections
     org_degree = edge_weights.groupby(org_col)["weight"].sum().sort_values(ascending=False)
@@ -482,6 +521,10 @@ def network_bipartite(
             max_degree=max_degree,
             top_orgs_json=json.dumps(top_orgs),
             top_divisions_json=json.dumps(top_divisions),
+            partnership_details_json=json.dumps(partnership_details),
+            org_type_counts_json=json.dumps(
+                {ot: int((df[org_type_col] == ot).sum()) for ot in org_types_present}
+            ),
         )
     )
 
