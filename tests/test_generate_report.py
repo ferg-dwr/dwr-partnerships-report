@@ -36,16 +36,10 @@ BASE_ROW = {
 }
 
 TAXONOMY_ROWS = [
-    {
-        "1st Level (Science Category)": "Geological and Earth Sciences",
-        "2nd level (Science Field)": "Hydrology",
-        "Description": "",
-    },
-    {
-        "1st Level (Science Category)": "Atmospheric Sciences",
-        "2nd level (Science Field)": "Climatology",
-        "Description": "",
-    },
+    {"1st Level (Science Category)": "Geological and Earth Sciences",
+     "2nd level (Science Field)": "Hydrology", "Description": ""},
+    {"1st Level (Science Category)": "Atmospheric Sciences",
+     "2nd level (Science Field)": "Climatology", "Description": ""},
 ]
 
 
@@ -91,100 +85,66 @@ class TestDiffBanner:
         assert result == ""
 
     def test_shows_new_count(self, tmp_path):
-        p = write_diff(
-            tmp_path, {"new_ids": [1, 2, 3], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        p = write_diff(tmp_path, {"new_ids": [1, 2, 3], "removed_ids": [],
+                                   "changed_rows": [], "warnings": []})
         result = _diff_banner(p)
         assert "+3 new" in result
 
     def test_shows_removed_count(self, tmp_path):
-        p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [5], "changed_rows": [], "warnings": []}
-        )
+        p = write_diff(tmp_path, {"new_ids": [], "removed_ids": [5],
+                                   "changed_rows": [], "warnings": []})
         result = _diff_banner(p)
         assert "-1 removed" in result
 
     def test_shows_changed_count(self, tmp_path):
-        p = write_diff(
-            tmp_path,
-            {
-                "new_ids": [],
-                "removed_ids": [],
-                "warnings": [],
-                "changed_rows": [
-                    {
-                        "id": 1,
-                        "changes": [
-                            {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
-                        ],
-                    }
-                ],
-            },
-        )
+        p = write_diff(tmp_path, {
+            "new_ids": [], "removed_ids": [], "warnings": [],
+            "changed_rows": [{"id": 1, "changes": [
+                {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
+            ]}],
+        })
         result = _diff_banner(p)
         assert "~ 1 updated" in result
 
     def test_shows_collision_warning(self, tmp_path):
-        p = write_diff(
-            tmp_path,
-            {
-                "new_ids": [],
-                "removed_ids": [],
-                "changed_rows": [],
-                "warnings": [{"kind": "collision", "id": 1, "message": "Name changed"}],
-            },
-        )
+        p = write_diff(tmp_path, {
+            "new_ids": [], "removed_ids": [], "changed_rows": [],
+            "warnings": [{"kind": "collision", "id": 1, "message": "Name changed"}],
+        })
         result = _diff_banner(p)
         assert "Collision" in result
         assert "banner--error" in result
 
     def test_shows_orphan_warning(self, tmp_path):
-        p = write_diff(
-            tmp_path,
-            {
-                "new_ids": [],
-                "removed_ids": [],
-                "changed_rows": [],
-                "warnings": [{"kind": "orphan", "id": 2, "message": "ID missing"}],
-            },
-        )
+        p = write_diff(tmp_path, {
+            "new_ids": [], "removed_ids": [], "changed_rows": [],
+            "warnings": [{"kind": "orphan", "id": 2, "message": "ID missing"}],
+        })
         result = _diff_banner(p)
         assert "banner--warn" in result
 
     def test_shows_changed_row_details(self, tmp_path):
-        p = write_diff(
-            tmp_path,
-            {
-                "new_ids": [],
-                "removed_ids": [],
-                "warnings": [],
-                "changed_rows": [
-                    {
-                        "id": 42,
-                        "changes": [
-                            {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
-                        ],
-                    }
-                ],
-            },
-        )
+        p = write_diff(tmp_path, {
+            "new_ids": [], "removed_ids": [], "warnings": [],
+            "changed_rows": [{"id": 42, "changes": [
+                {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
+            ]}],
+        })
         result = _diff_banner(p)
         assert "ID 42" in result
         assert "Status of Partnership" in result
 
     def test_zero_counts_shown(self, tmp_path):
-        p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        p = write_diff(tmp_path, {"new_ids": [], "removed_ids": [],
+                                   "changed_rows": [], "warnings": []})
         result = _diff_banner(p)
         assert "+0 new" in result
         assert "-0 removed" in result
         assert "~ 0 updated" in result
 
     def test_returns_html_string(self, tmp_path):
-        p = write_diff(
-            tmp_path, {"new_ids": [1], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        p = write_diff(tmp_path, {"new_ids": [1], "removed_ids": [],
+                                   "changed_rows": [], "warnings": []})
         result = _diff_banner(p)
         assert isinstance(result, str)
         assert "diff-summary" in result
@@ -196,16 +156,15 @@ class TestDiffBanner:
 
 
 class TestBuildPlotlyCharts:
-    def test_returns_treemap_fields(self, tmp_path):
+    def test_returns_treemap_coverage(self, tmp_path):
         data = make_data(tmp_path)
         charts = _build_plotly_charts(data, tmp_path / "nonexistent_taxonomy.csv")
-        assert "treemap_fields" in charts
-        assert len(charts["treemap_fields"]) > 0
+        assert "treemap_coverage" in charts
 
-    def test_treemap_fields_contains_plotly(self, tmp_path):
+    def test_coverage_treemap_missing_shown_as_fallback(self, tmp_path):
         data = make_data(tmp_path)
         charts = _build_plotly_charts(data, tmp_path / "nonexistent_taxonomy.csv")
-        assert "plotly" in charts["treemap_fields"].lower()
+        assert "chart-missing" in charts["treemap_coverage"]
 
     def test_coverage_treemap_missing_taxonomy(self, tmp_path):
         data = make_data(tmp_path)
@@ -248,7 +207,6 @@ class TestBuildNetworkCharts:
 
     def test_tripartite_present_with_enrichment(self, tmp_path):
         from dwr_report.ingest.taxonomy import enrich_science_fields
-
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         data = make_data(tmp_path)
         enrich_science_fields(data, tax_p)
@@ -259,7 +217,6 @@ class TestBuildNetworkCharts:
 
     def test_network_files_written_to_disk(self, tmp_path):
         from dwr_report.ingest.taxonomy import enrich_science_fields
-
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         data = make_data(tmp_path)
         enrich_science_fields(data, tax_p)
@@ -272,7 +229,7 @@ class TestBuildNetworkCharts:
     def test_missing_template_produces_fallback(self, tmp_path):
         data = make_data(tmp_path)
         tri_t = tmp_path / "templates" / "network_tripartite.html"  # doesn't exist
-        bi_t = tmp_path / "templates" / "network_bipartite.html"  # doesn't exist
+        bi_t = tmp_path / "templates" / "network_bipartite.html"    # doesn't exist
         iframes = _build_network_charts(data, tmp_path, tri_t, bi_t)
         assert "chart-missing" in iframes["network_bipartite"]
 
@@ -286,7 +243,6 @@ class TestAssembleHtml:
     def make_inputs(self) -> tuple[str, dict, dict, str]:
         diff_banner = "<div class='diff-summary'>changes</div>"
         charts = {
-            "treemap_fields": "<div>treemap fields</div>",
             "treemap_coverage": "<div>treemap coverage</div>",
         }
         iframes = {
@@ -307,15 +263,14 @@ class TestAssembleHtml:
 
     def test_contains_all_chart_sections(self):
         result = _assemble_html(*self.make_inputs())
-        assert "treemap-fields" in result
         assert "treemap-coverage" in result
         assert "network-tripartite" in result
         assert "network-bipartite" in result
 
     def test_contains_nav_links(self):
         result = _assemble_html(*self.make_inputs())
-        assert "<nav>" in result
-        assert "Science Fields" in result
+        assert "Coverage Gaps" in result
+        assert "network-tripartite" in result
 
     def test_contains_timestamp(self):
         result = _assemble_html(*self.make_inputs())
@@ -323,7 +278,6 @@ class TestAssembleHtml:
 
     def test_contains_chart_content(self):
         result = _assemble_html(*self.make_inputs())
-        assert "treemap fields" in result
         assert "treemap coverage" in result
 
 
@@ -335,43 +289,29 @@ class TestAssembleHtml:
 class TestGenerate:
     def test_creates_index_html(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
-        diff_p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        diff_p = write_diff(tmp_path, {"new_ids": [], "removed_ids": [],
+                                        "changed_rows": [], "warnings": []})
         out_p = tmp_path / "reports" / "index.html"
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
         bi_t = make_minimal_template(tmp_path, "network_bipartite.html")
 
-        generate(
-            csv_p,
-            diff_p,
-            out_p,
-            taxonomy_path=tax_p,
-            tripartite_template=tri_t,
-            bipartite_template=bi_t,
-        )
+        generate(csv_p, diff_p, out_p, taxonomy_path=tax_p,
+                 tripartite_template=tri_t, bipartite_template=bi_t)
 
         assert out_p.exists()
 
     def test_output_is_valid_html(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
-        diff_p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        diff_p = write_diff(tmp_path, {"new_ids": [], "removed_ids": [],
+                                        "changed_rows": [], "warnings": []})
         out_p = tmp_path / "reports" / "index.html"
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
         bi_t = make_minimal_template(tmp_path, "network_bipartite.html")
 
-        generate(
-            csv_p,
-            diff_p,
-            out_p,
-            taxonomy_path=tax_p,
-            tripartite_template=tri_t,
-            bipartite_template=bi_t,
-        )
+        generate(csv_p, diff_p, out_p, taxonomy_path=tax_p,
+                 tripartite_template=tri_t, bipartite_template=bi_t)
 
         content = out_p.read_text()
         assert "<!DOCTYPE html>" in content
@@ -379,14 +319,14 @@ class TestGenerate:
 
     def test_creates_parent_directories(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
-        diff_p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        diff_p = write_diff(tmp_path, {"new_ids": [], "removed_ids": [],
+                                        "changed_rows": [], "warnings": []})
         out_p = tmp_path / "deep" / "nested" / "reports" / "index.html"
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
         bi_t = make_minimal_template(tmp_path, "network_bipartite.html")
 
-        generate(csv_p, diff_p, out_p, tripartite_template=tri_t, bipartite_template=bi_t)
+        generate(csv_p, diff_p, out_p,
+                 tripartite_template=tri_t, bipartite_template=bi_t)
 
         assert out_p.exists()
 
@@ -397,20 +337,21 @@ class TestGenerate:
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
         bi_t = make_minimal_template(tmp_path, "network_bipartite.html")
 
-        generate(csv_p, diff_p, out_p, tripartite_template=tri_t, bipartite_template=bi_t)
+        generate(csv_p, diff_p, out_p,
+                 tripartite_template=tri_t, bipartite_template=bi_t)
 
         assert out_p.exists()
 
     def test_diff_banner_reflected_in_output(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
-        diff_p = write_diff(
-            tmp_path, {"new_ids": [99, 100], "removed_ids": [], "changed_rows": [], "warnings": []}
-        )
+        diff_p = write_diff(tmp_path, {"new_ids": [99, 100], "removed_ids": [],
+                                        "changed_rows": [], "warnings": []})
         out_p = tmp_path / "reports" / "index.html"
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
         bi_t = make_minimal_template(tmp_path, "network_bipartite.html")
 
-        generate(csv_p, diff_p, out_p, tripartite_template=tri_t, bipartite_template=bi_t)
+        generate(csv_p, diff_p, out_p,
+                 tripartite_template=tri_t, bipartite_template=bi_t)
 
         content = out_p.read_text()
         assert "+2 new" in content
