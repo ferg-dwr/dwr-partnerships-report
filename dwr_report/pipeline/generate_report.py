@@ -335,6 +335,16 @@ def _assemble_html(
     .change-table tr:hover td {{ background: #fafafa; }}
 
     .chart-section {{ margin-bottom: 3rem; }}
+    .chart-context {{
+      font-size: 0.875rem;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--blue-light);
+      border-left: 3px solid var(--blue-mid);
+      border-radius: 0 4px 4px 0;
+    }}
     .chart-section h2 {{ color: var(--blue-dark); border-bottom: 1px solid var(--grey); padding-bottom: 0.5rem; margin-bottom: 1rem; }}
     .chart-missing {{ color: #888; font-style: italic; padding: 1rem; background: var(--grey); border-radius: 4px; }}
 
@@ -368,11 +378,29 @@ def _assemble_html(
 
   <div class="chart-section" id="network-tripartite">
     <h2>Science Field ↔ Staff ↔ Division Network</h2>
+    <p class="chart-context">
+      Use this network to explore how DWR staff connect science and technology fields
+      to divisions, offices, and branches. Each node represents a science field (left),
+      a DWR point of contact (center), or a division/office/branch (right). An edge
+      indicates that a staff member is the point of contact for a partnership in that
+      science field. <strong>Click any node</strong> to highlight its connections.
+      Note: this figure reflects only partnerships where a staff member is listed as
+      the primary point of contact — it does not capture all staff engagement.
+    </p>
     {iframes["network_tripartite"]}
   </div>
 
   <div class="chart-section" id="network-bipartite">
     <h2>Division ↔ Partner Organization Network</h2>
+    <p class="chart-context">
+      Use this network to explore how DWR divisions, offices, and branches connect
+      to external partner organizations. Node size reflects the total number of
+      partnerships — larger nodes are more connected. Edge width represents the
+      number of partnerships between a division and an organization.
+      <strong>Click any node</strong> to highlight its connections and see a summary.
+      Use this figure to answer questions like: which organizations partner with the
+      most DWR divisions? Which divisions have the broadest external engagement?
+    </p>
     {iframes["network_bipartite"]}
   </div>
 

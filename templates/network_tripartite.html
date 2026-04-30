@@ -257,7 +257,7 @@ var network   = new vis.Network(
     { nodes: visNodes, edges: visEdges },
     {
         physics:     { enabled: false },
-        interaction: { hover: true, tooltips: false },
+        interaction: { hover: true, tooltipDelay: 200 },
         nodes:       { borderWidth: 0, shadow: false },
         edges:       { smooth: { type: "curvedCW", roundness: 0.1 } },
     }
