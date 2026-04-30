@@ -20,10 +20,6 @@ from dwr_report.charts.treemaps import treemap, treemap_coverage
 from dwr_report.ingest.loader import PartnershipData
 from dwr_report.ingest.taxonomy import enrich_science_fields
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
 # Path to taxonomy CSV relative to repo root — used by coverage treemap
 # and science field enrichment
 TAXONOMY_PATH = Path("data/dwr_custom_taxonomy.csv")
@@ -31,11 +27,6 @@ TAXONOMY_PATH = Path("data/dwr_custom_taxonomy.csv")
 # Jinja2 template paths relative to repo root
 TRIPARTITE_TEMPLATE = Path("templates/network_tripartite.html")
 BIPARTITE_TEMPLATE = Path("templates/network_bipartite.html")
-
-
-# ---------------------------------------------------------------------------
-# Diff summary → HTML
-# ---------------------------------------------------------------------------
 
 
 def _diff_banner(diff_path: Path) -> str:
@@ -53,6 +44,7 @@ def _diff_banner(diff_path: Path) -> str:
     collision_warnings = [w for w in warnings if w["kind"] == "collision"]
     orphan_warnings = [w for w in warnings if w["kind"] == "orphan"]
 
+    # --- Warnings ---
     warning_html = ""
     if collision_warnings:
         items = "".join(f"<li>ID {w['id']}: {w['message']}</li>" for w in collision_warnings)
@@ -70,28 +62,54 @@ def _diff_banner(diff_path: Path) -> str:
           <ul>{items}</ul>
         </div>"""
 
+    # --- Changed partnership cards (collapsed by default, shown at bottom) ---
     changes_html = ""
     if diff.get("changed_rows"):
-        rows = ""
+        cards = ""
         for row in diff["changed_rows"]:
+            n_fields = len(row["changes"])
+            # Extract org name for the card header if available
+            org_change = next(
+                (c for c in row["changes"] if c["field"] == "Partnership Organization Name"),
+                None,
+            )
+            org_label = org_change["old"] if org_change else f"ID {row['id']}"
+
             field_rows = "".join(
-                f"<tr><td>{c['field']}</td><td>{c['old']}</td><td>{c['new']}</td></tr>"
+                f"""<tr>
+                  <td class="change-field">{c["field"]}</td>
+                  <td class="change-old">{c["old"]}</td>
+                  <td class="change-arrow">→</td>
+                  <td class="change-new">{c["new"]}</td>
+                </tr>"""
                 for c in row["changes"]
             )
-            rows += f"""
-            <details>
-              <summary>ID {row["id"]}</summary>
-              <table>
-                <thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
+            cards += f"""
+            <details class="change-card">
+              <summary>
+                <span class="change-id">ID {row["id"]}</span>
+                <span class="change-org">{org_label}</span>
+                <span class="change-count">{n_fields} field{"s" if n_fields != 1 else ""} changed</span>
+              </summary>
+              <table class="change-table">
+                <thead>
+                  <tr>
+                    <th>Field</th>
+                    <th>Before</th>
+                    <th></th>
+                    <th>After</th>
+                  </tr>
+                </thead>
                 <tbody>{field_rows}</tbody>
               </table>
             </details>"""
-        changes_html = f"<div class='changes'>{rows}</div>"
 
-    # TODO: Enhance diff banner with side-by-side comparison cards per changed
-    # partnership, with changed fields highlighted in yellow rather than collapsed
-    # in a <details> table. Consider a "what changed" card layout showing
-    # old value → new value inline per field.
+        changes_html = f"""
+        <div class="changes-section">
+          <h3>Updated partnerships</h3>
+          {cards}
+        </div>"""
+
     return f"""
     <div class="diff-summary">
       <h2>What changed in this upload</h2>
@@ -103,11 +121,6 @@ def _diff_banner(diff_path: Path) -> str:
       {warning_html}
       {changes_html}
     </div>"""
-
-
-# ---------------------------------------------------------------------------
-# Chart generation helpers
-# ---------------------------------------------------------------------------
 
 
 def _build_plotly_charts(data: PartnershipData, taxonomy_path: Path) -> dict[str, str]:
@@ -199,11 +212,6 @@ def _build_network_charts(
     return iframes
 
 
-# ---------------------------------------------------------------------------
-# HTML assembly
-# ---------------------------------------------------------------------------
-
-
 def _assemble_html(
     diff_banner: str,
     charts: dict[str, str],
@@ -291,15 +299,42 @@ def _assemble_html(
     .banner--warn  {{ background: #fff9c4; border-left: 4px solid #f9a825; }}
     .banner ul     {{ margin: 0.5rem 0 0; padding-left: 1.25rem; }}
 
-    .changes details {{ margin: 0.5rem 0; }}
-    .changes summary {{ cursor: pointer; font-weight: 600; padding: 0.25rem 0; }}
-    .changes table   {{ width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }}
-    .changes th, .changes td {{
-      text-align: left;
-      padding: 0.4rem 0.75rem;
-      border-bottom: 1px solid var(--grey);
+    .changes-section {{ margin-top: 1rem; }}
+    .changes-section h3 {{ font-size: 0.95rem; color: var(--blue-dark); margin: 0 0 0.5rem; }}
+
+    .change-card {{ margin: 0.4rem 0; border: 1px solid var(--grey); border-radius: 6px; overflow: hidden; }}
+    .change-card summary {{
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.9rem;
+      background: white;
+      user-select: none;
+      list-style: none;
     }}
-    .changes th {{ background: var(--blue-light); font-weight: 600; }}
+    .change-card summary::-webkit-details-marker {{ display: none; }}
+    .change-card summary::before {{ content: "▶"; font-size: 0.65rem; color: #999; transition: transform 0.15s; }}
+    .change-card[open] summary::before {{ transform: rotate(90deg); }}
+    .change-id {{ font-weight: 700; color: var(--blue-dark); font-size: 0.8rem; white-space: nowrap; }}
+    .change-org {{ flex: 1; font-size: 0.875rem; color: #333; }}
+    .change-count {{ font-size: 0.78rem; color: #888; white-space: nowrap; }}
+
+    .change-table {{ width: 100%; border-collapse: collapse; font-size: 0.82rem; }}
+    .change-table th {{
+      text-align: left;
+      padding: 0.35rem 0.9rem;
+      background: var(--blue-light);
+      color: var(--blue-dark);
+      font-weight: 600;
+      font-size: 0.78rem;
+    }}
+    .change-table td {{ padding: 0.35rem 0.9rem; border-top: 1px solid var(--grey); vertical-align: top; }}
+    .change-field {{ font-weight: 600; color: #444; width: 30%; }}
+    .change-old {{ color: #c62828; width: 30%; word-break: break-word; }}
+    .change-arrow {{ color: #999; width: 5%; text-align: center; }}
+    .change-new {{ color: #2e7d32; width: 30%; word-break: break-word; }}
+    .change-table tr:hover td {{ background: #fafafa; }}
 
     .chart-section {{ margin-bottom: 3rem; }}
     .chart-section h2 {{ color: var(--blue-dark); border-bottom: 1px solid var(--grey); padding-bottom: 0.5rem; margin-bottom: 1rem; }}
@@ -345,11 +380,6 @@ def _assemble_html(
 
 </body>
 </html>"""
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 
 def generate(
