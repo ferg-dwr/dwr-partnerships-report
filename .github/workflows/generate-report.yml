@@ -10,6 +10,7 @@ on:
 permissions:
   pages: write
   id-token: write
+  issues: write              # Needed to create changelog issues
 
 jobs:
   generate-report:
@@ -51,6 +52,12 @@ jobs:
             --diff reports/diff.json \
             --output reports/index.html \
             --taxonomy data/dwr_custom_taxonomy.csv
+
+      - name: Create changelog issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python dwr_report/pipeline/create_issue.py             --diff reports/diff.json             --repo ${{ github.repository }}             --sha ${{ github.sha }}
 
       - name: Copy upload UI into Pages artifact
         run: cp -r upload-ui reports/upload-ui
