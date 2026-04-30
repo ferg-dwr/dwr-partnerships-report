@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DWR Partnerships Report</title>
+  <style>
+    :root {
+      --blue-dark:  #003366;
+      --blue-mid:   #0071BC;
+      --blue-light: #E8F0F7;
+      --gold:       #C8960C;
+      --gold-dark:  #a67a08;
+      --grey:       #D9D9D9;
+      --grey-light: #F5F7FA;
+      --green:      #2e7d32;
+      --red:        #c62828;
+      --orange:     #e65100;
+      --text:       #333333;
+      --border:     #CCCCCC;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      color: var(--text);
+      background: #F0F2F5;
+    }
+
+    /* ════════════════════════════════════════
+       HEADER — full bleed navy block
+    ════════════════════════════════════════ */
+    header {
+      background: var(--blue-dark);
+      width: 100%;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 2rem 0;
+      text-align: center;
+    }
+
+    .header-org {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.6rem;
+    }
+
+    h1 {
+      color: white;
+      font-size: 2.4rem;
+      font-weight: 900;
+      font-family: Arial Black, Arial, sans-serif;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .generated-at {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.72rem;
+      font-style: italic;
+    }
+
+    /* ── SaaS grid nav — constrained to chart width ── */
+    .header-nav-wrap {
+      border-top: 1px solid rgba(255,255,255,0.12);
+      margin-top: 0.25rem;
+    }
+    .header-nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header-nav a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.9rem 1rem;
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.65);
+      border-right: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.15s;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+    .header-nav a:hover {
+      background: rgba(0,176,240,0.8);
+      color: white;
+    }
+    .header-nav a.active {
+      background: rgba(0,51,102,0.8);
+      color: white;
+      border-bottom: 3px solid var(--gold);
+    }
+    .header-nav .nav-upload {
+      background: rgba(200,150,12,0.85);
+      color: rgba(255,255,255,0.9);
+      border-right: none;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.78rem;
+    }
+    .header-nav .nav-upload:hover {
+      background: rgba(242,190,42,0.9);
+      color: white;
+    }
+
+    /* ── Floating TOC — left of chart-section, screenshot style ── */
+    #floating-toc {
+      position: fixed;
+      left: max(0.25rem, calc(50% - 780px));
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 900;
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      align-items: flex-end;
+      max-width: 160px;
+    }
+
+    .toc-item {
+      display: block;
+      padding: 1rem 1.1rem;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      transition: color 0.15s;
+      white-space: normal;
+      text-align: right;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      border-left: 3px solid transparent;
+      width: 160px;
+      line-height: 1.3;
+    }
+    .toc-item:hover {
+      color: var(--blue-mid);
+    }
+    .toc-item.active {
+      background: var(--blue-dark);
+      color: white;
+      border-left: 3px solid var(--gold);
+    }
+
+    /* ── Main content ── */
+    .main-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem 3rem;
+    }
+
+    /* ── Diff summary ── */
+    .diff-summary {
+      background: white;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue-mid);
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .diff-summary h2 { font-size: 0.75rem; color: var(--blue-dark); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.75rem; }
+    .diff-stats { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .stat { padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.875rem; }
+    .stat--new     { background: #c8e6c9; color: var(--green); }
+    .stat--removed { background: #ffcdd2; color: var(--red); }
+    .stat--changed { background: #fff3e0; color: var(--orange); }
+
+    .banner { border-radius: 4px; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 0.875rem; }
+    .banner--error { background: #ffcdd2; border-left: 4px solid var(--red); }
+    .banner--warn  { background: #fff9c4; border-left: 4px solid #f9a825; }
+    .banner ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+
+    .changes-section { margin-top: 1rem; }
+    .changes-section h3 { font-size: 0.72rem; color: var(--blue-dark); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
+    .change-card { margin: 0.4rem 0; border: 1px solid var(--grey); border-radius: 4px; overflow: hidden; }
+    .change-card summary { cursor: pointer; display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.9rem; background: white; user-select: none; list-style: none; }
+    .change-card summary::-webkit-details-marker { display: none; }
+    .change-card summary::before { content: "▶"; font-size: 0.65rem; color: #999; transition: transform 0.15s; }
+    .change-card[open] summary::before { transform: rotate(90deg); }
+    .change-id { font-weight: 700; color: var(--blue-dark); font-size: 0.8rem; white-space: nowrap; }
+    .change-org { flex: 1; font-size: 0.875rem; color: #333; }
+    .change-count { font-size: 0.78rem; color: #888; white-space: nowrap; }
+    .change-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .change-table th { text-align: left; padding: 0.35rem 0.9rem; background: var(--blue-light); color: var(--blue-dark); font-weight: 600; font-size: 0.78rem; }
+    .change-table td { padding: 0.35rem 0.9rem; border-top: 1px solid var(--grey); vertical-align: top; }
+    .change-field { font-weight: 600; color: #444; width: 30%; }
+    .change-old { color: #c62828; width: 30%; word-break: break-word; }
+    .change-arrow { color: #999; width: 5%; text-align: center; }
+    .change-new { color: #2e7d32; width: 30%; word-break: break-word; }
+    .change-table tr:hover td { background: #fafafa; }
+
+    /* ── Chart sections ── */
+    .chart-section {
+      margin-bottom: 2rem;
+      scroll-margin-top: 1.5rem;
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    .chart-section h2 {
+      color: var(--blue-dark);
+      font-family: Arial Black, Arial, sans-serif;
+      font-size: 1.15rem;
+      font-weight: 900;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .chart-context {
+      font-size: 0.82rem;
+      color: #666;
+      line-height: 1.65;
+      margin-bottom: 1rem;
+      padding: 0.65rem 1rem;
+      background: var(--blue-light);
+      border-left: 3px solid var(--blue-mid);
+      border-radius: 0 4px 4px 0;
+    }
+    .chart-missing { color: #888; font-style: italic; padding: 1rem; background: var(--grey); border-radius: 4px; }
+    iframe { border-radius: 6px; display: block; border: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="header-org">California Department of Water Resources</div>
+      <h1>Internal Partnerships Report</h1>
+      <div class="header-meta">
+        <span class="generated-at">Last updated {{ generated_at }}</span>
+      </div>
+    </div>
+    <div class="header-nav-wrap">
+      <nav class="header-nav" id="header-nav">
+        <a href="#treemap-coverage">Science Coverage Gaps</a>
+        <a href="#network-tripartite">Organizational Network</a>
+        <a href="#network-bipartite">Division &amp; Partner Network</a>
+        <a href="upload-ui/" class="nav-upload">⬆ Upload Data</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Floating TOC — shown when header nav scrolls out of view -->
+  <nav id="floating-toc">
+    <a href="#treemap-coverage"   class="toc-item">Science Gaps</a>
+    <a href="#network-tripartite" class="toc-item">Science Network</a>
+    <a href="#network-bipartite"  class="toc-item">Partner Network</a>
+  </nav>
+
+  <div class="main-content">
+
+  {{ diff_banner }}
+
+  <div class="chart-section" id="treemap-coverage">
+    <h2>Science Field Coverage</h2>
+    <p class="chart-context">
+      Darker blue indicates more partnerships in that science field. Grey fields have no current
+      partnerships — these represent potential coverage gaps.
+    </p>
+    {{ treemap_coverage }}
+  </div>
+
+  <div class="chart-section" id="network-tripartite">
+    <h2>Organizational Network: Science, Staff, and Structure</h2>
+    <p class="chart-context">
+      Use this network to explore how DWR staff connect science and technology fields
+      to divisions, offices, and branches. Each node represents a science field (left),
+      a DWR point of contact (center), or a division/office/branch (right). An edge
+      indicates that a staff member is the point of contact for a partnership in that
+      science field. <strong>Click any node</strong> to highlight its connections.
+      Note: this figure reflects only partnerships where a staff member is listed as
+      the primary point of contact — it does not capture all staff engagement.
+    </p>
+    {{ iframe_tripartite }}
+  </div>
+
+  <div class="chart-section" id="network-bipartite">
+    <h2>Organizational Network: DWR and Partner Organizations</h2>
+    <p class="chart-context">
+      Use this network to explore how DWR divisions, offices, and branches connect
+      to external partner organizations. Node size reflects the total number of
+      partnerships — larger nodes are more connected. Edge width represents the
+      number of partnerships between a division and an organization.
+      <strong>Click any node</strong> to highlight its connections and see a summary.
+    </p>
+    {{ iframe_bipartite }}
+  </div>
+
+  </div>
+
+  <script>
+    var tocItems    = document.querySelectorAll('.toc-item');
+    var headerLinks = document.querySelectorAll('.header-nav a:not(.nav-upload)');
+    var floatingToc = document.getElementById('floating-toc');
+    var headerNav   = document.getElementById('header-nav');
+    var sections    = ['treemap-coverage', 'network-tripartite', 'network-bipartite']
+      .map(function(id) { return document.getElementById(id); }).filter(Boolean);
+
+    function getActiveId() {
+      // Only highlight active section after the user has scrolled past the header
+      var headerBottom = headerNav ? headerNav.getBoundingClientRect().bottom : 0;
+      if (headerBottom > 0) return '';   // header still visible — no active state
+      var scrollY = window.scrollY + window.innerHeight * 0.3;
+      var active  = sections[0];
+      sections.forEach(function(s) { if (s && s.offsetTop <= scrollY) active = s; });
+      return active ? active.id : '';
+    }
+
+    function updateNav() {
+      var headerBottom = headerNav ? headerNav.getBoundingClientRect().bottom : 0;
+      floatingToc.style.display = headerBottom < 0 ? 'flex' : 'none';
+      var activeId = getActiveId();
+      tocItems.forEach(function(a) {
+        a.classList.toggle('active', a.getAttribute('href').slice(1) === activeId);
+      });
+      headerLinks.forEach(function(a) {
+        a.classList.toggle('active', a.getAttribute('href').slice(1) === activeId);
+      });
+    }
+
+    window.addEventListener('scroll', updateNav, { passive: true });
+    updateNav();
+  </script>
+</body>
+</html>
