@@ -21,6 +21,9 @@ from dwr_report.ingest.loader import PartnershipData, to_list_if_listlike
 # vis-network CDN reference injected into templates as {{ vis_js_cdn }}
 _VIS_JS_CDN = "https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"
 
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
 
 _CATEGORY_PALETTE = [
     "#1E88E5",
@@ -266,7 +269,7 @@ def network_tripartite(
     template = _load_template(Path(template_path))
     return str(
         template.render(
-            vis_js="",
+            vis_js_cdn=_VIS_JS_CDN,
             title=title,
             nodes_json=json.dumps(nodes),
             edges_json=json.dumps(edges),
@@ -441,7 +444,7 @@ def network_bipartite(
     template = _load_template(Path(template_path))
     return str(
         template.render(
-            vis_js="",
+            vis_js_cdn=_VIS_JS_CDN,
             title=title,
             nodes_json=json.dumps(nodes),
             edges_json=json.dumps(edges),
