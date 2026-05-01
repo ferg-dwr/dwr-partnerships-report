@@ -135,7 +135,6 @@ def treemap_coverage(
         color="ColorValue",
         color_continuous_scale=color_scale,
         range_color=(-0.01, 1.0),
-        title=title,
     )
 
     fig.update_traces(
@@ -147,7 +146,7 @@ def treemap_coverage(
     fig.update_layout(
         width=1100,
         height=900,
-        margin=dict(t=80, l=20, r=20, b=20),
+        margin=dict(t=10, l=20, r=20, b=20),
         coloraxis_showscale=False,
         title_font_size=20,
     )

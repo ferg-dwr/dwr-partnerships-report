@@ -58,13 +58,58 @@
   /* ── Legend ── */
   #legend {
     position: fixed; top: 20px; left: 20px;
-    background: rgba(255,255,255,0.97);
-    border: 1px solid #ddd; border-radius: 10px;
-    padding: 14px 18px; font-size: 12px; color: #111;
-    z-index: 999; line-height: 2; max-height: 90vh;
-    overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    min-width: 220px; max-width: 250px;
+    width: 240px; max-height: 85vh; overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ddd; border-radius: 8px;
+    z-index: 999;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
   }
+
+  /* ── Accordion legend ── */
+  .leg-header {
+    padding: 10px 12px 8px;
+    background: #003366;
+    border-radius: 8px 8px 0 0;
+  }
+  .leg-title {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.02em;
+    margin-bottom: 2px;
+  }
+  .leg-hint {
+    display: block;
+    font-size: 9px;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+    line-height: 1.4;
+  }
+  .leg-section { border-bottom: 1px solid #f0f0f0; }
+  .leg-section:last-of-type { border-bottom: none; }
+  .leg-summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #003366;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    background: #fafafa;
+    transition: background 0.12s;
+  }
+  .leg-summary::-webkit-details-marker { display: none; }
+  .leg-summary::after { content: "▶"; font-size: 7px; color: #aaa; transition: transform 0.15s; }
+  details[open] .leg-summary::after { transform: rotate(90deg); }
+  .leg-summary:hover { background: #E8F0F7; }
+  .leg-body { padding: 6px 12px 10px; font-size: 11px; line-height: 1.5; color: #444; }
+  .leg-body p { margin-bottom: 4px; font-size: 10px; color: #555; }
   .section-divider { border-top: 1px solid #eee; margin: 10px 0 8px; padding-top: 8px; }
   .section-title {
     font-size: 11px; font-weight: bold; color: #555;
@@ -168,154 +213,89 @@
 
 <!-- Legend -->
 <div id="legend" style="display:none;">
-  <b style="font-size:13px;">DWR and Partner Org Network</b><br>
-  <span style="font-size:10px;color:#888;">Edge stroke width = No. partnerships</span>
-  <span style="font-size:10px;color:#888;">Drag nodes freely</span>
-  <br><br>
 
-  <!-- Summary panel — populated from static data injected at report time -->
-  <div id="summary-panel" style="
-    background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px;
-    padding:10px 12px; margin-bottom:12px; font-size:11px;">
+  <!-- ── Header (always visible) ── -->
+  <div class="leg-header">
+    <span class="leg-title">Division &amp; Partner Network</span>
+    <span class="leg-hint">Hover to highlight · Click to pin · Drag nodes</span>
+  </div>
 
-    <b style="font-size:12px; color:#003366; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Top Partner Organizations</b>
-    <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin:3px 0 4px;">
-      <span>Organization</span><span>Partnerships</span>
+  <!-- ── How to use ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">How to use</summary>
+    <div class="leg-body">
+      <p>Click any <strong>node</strong> to see its connected partners and partnership details.</p>
+      <p>Click any <strong>edge</strong> to see the two connected entities side by side.</p>
+      <p>Hover a row in the panel to highlight that node in the network.</p>
     </div>
-    <div id="top-orgs-list" style="margin:0 0 10px;">
-      {% for org in top_orgs %}
-      <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
-        <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-              title="{{ org.name }}">{{ org.name }}</span>
-        <span style="color:#6BAED6; font-weight:600; margin-left:8px; white-space:nowrap;">
-          {{ org.connections }} 🤝
+  </details>
+
+  <!-- ── Node Size ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Node Size</summary>
+    <div class="leg-body">
+      <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:4px;">
+        <div style="text-align:center;">
+          <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3" fill="#aaa"/></svg>
+          <div style="font-size:9px;color:#888;">fewer</div>
+        </div>
+        <div style="flex:1;height:1px;background:linear-gradient(to right,#ddd,#888);"></div>
+        <div style="text-align:center;">
+          <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#aaa"/></svg>
+          <div style="font-size:9px;color:#888;">more</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#aaa;text-align:center;">Size = total partnerships</div>
+      <div style="margin-top:8px;font-size:11px;">
+        <span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;">
+          <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#607D8B"/></svg> DWR Division
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:5px;">
+          <svg width="10" height="10"><rect width="10" height="10" fill="#607D8B"/></svg> External Partner
         </span>
       </div>
-      {% endfor %}
     </div>
+  </details>
 
-    <b style="font-size:12px; color:#003366; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Top DWR Divisions</b>
-    <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin:3px 0 4px;">
-      <span>Division</span><span>Partnerships</span>
+  <!-- ── Partner Types ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Partner Types</summary>
+    <div class="leg-body" id="org-type-legend-body">
+      <!-- injected by JS after network stabilizes -->
     </div>
-    <div id="top-divisions-list" style="margin:0;">
+  </details>
+
+  <!-- ── Top 5 Divisions ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Top 5 Divisions</summary>
+    <div class="leg-body">
+      <div style="font-size:9px;color:#aaa;display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span>Division</span><span>Partnerships</span>
+      </div>
       {% for div in top_divisions %}
-      <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #eee;">
-        <span style="color:#333; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-              title="{{ div.name }}">{{ div.name }}</span>
-        <span style="color:#FFB74D; font-weight:600; margin-left:8px; white-space:nowrap;">
-          {{ div.connections }} 🤝
-        </span>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ div.name }}">{{ div.name }}</span>
+        <span style="color:#FFB74D;font-weight:600;margin-left:6px;">{{ div.connections }} 🤝</span>
       </div>
       {% endfor %}
     </div>
-  </div>
+  </details>
 
-  <!-- Node size legend -->
-  <div style="background:#f8f9fa; border:1px solid #e0e0e0; border-radius:6px;
-              padding:10px 12px; margin-bottom:12px; font-size:11px;">
-    <b style="font-size:12px; color:#003366; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Node Size</b>
-    <div style="margin-top:8px; display:flex; align-items:center; gap:10px; justify-content:space-between;">
-      <div style="text-align:center;">
-        <svg width="20" height="20" viewBox="0 0 20 20">
-          <circle cx="10" cy="10" r="4" fill="#aaa"/>
-        </svg>
-        <div style="color:#888; font-size:10px; margin-top:2px;">fewer</div>
+  <!-- ── Top 5 Organizations ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Top 5 Organizations</summary>
+    <div class="leg-body">
+      <div style="font-size:9px;color:#aaa;display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span>Organization</span><span>Partnerships</span>
       </div>
-      <div style="flex:1; height:1px; background:linear-gradient(to right, #ddd, #aaa);"></div>
-      <div style="text-align:center;">
-        <svg width="30" height="30" viewBox="0 0 30 30">
-          <circle cx="15" cy="15" r="10" fill="#aaa"/>
-        </svg>
-        <div style="color:#888; font-size:10px; margin-top:2px;">more</div>
+      {% for org in top_orgs %}
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ org.name }}">{{ org.name }}</span>
+        <span style="color:#6BAED6;font-weight:600;margin-left:6px;">{{ org.connections }} 🤝</span>
       </div>
+      {% endfor %}
     </div>
-    <div style="color:#aaa; font-size:10px; margin-top:6px; text-align:center;">
-      Size = total partnerships (1 – {{ max_degree }})
-    </div>
-  </div>
-
-  <br>
-
-  <b>Organization Type</b>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#E53935;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Federal agency or department</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#6D4C41;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Local or Regional agency</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#00ACC1;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">NGO</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#F4511E;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Network/ Collaborative</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#D81B60;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Non-profit</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#8E24AA;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Public Research Lab</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#FB8C00;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Public/Private</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#43A047;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">State agency or department</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#3949AB;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Tribe</span>
-  </div>
-  
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#1E88E5;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">University</span>
-  </div>
-  
-  <br>
-  <div>
-    <span style="display:inline-block;width:12px;height:12px;background:#607D8B;
-                 border-radius:50%;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;font-weight:bold;">DWR Division (circle)</span>
-  </div>
-  <div>
-    <span style="display:inline-block;width:10px;height:10px;background:#aaa;
-                 border-radius:2px;margin-right:5px;vertical-align:middle;"></span>
-    <span style="font-size:11px;">Organization (square)</span>
-  </div>
-  <br>
-  <span style="color:#888;font-size:10px;">
-    Hover or click to reveal labels &amp; connections<br>
-    Top 5 divisions always labeled<br>
-    Drag nodes · Click canvas to unpin
-  </span>
+  </details>
 
   <div id="spark-divisions" class="section-divider"></div>
   <div id="spark-orgs"      class="section-divider"></div>
@@ -457,16 +437,18 @@ network.on("stabilizationIterationsDone", function() {
     layoutReady = true;
 
     // Inject org type counts into legend
+    var legBody = document.getElementById("org-type-legend-body");
     document.querySelectorAll(".org-type-label").forEach(function(el) {
         var ot    = el.dataset.orgType;
         var count = orgTypeCounts[ot] || 0;
-        if (count > 0) {
-            var badge = document.createElement("span");
-            badge.textContent = count;
-            badge.style.cssText = "float:right; background:#eef; color:#555; " +
-                                  "border-radius:8px; padding:0 5px; font-size:10px; " +
-                                  "font-weight:600; margin-left:4px;";
-            el.appendChild(badge);
+        var color = orgTypeColorsData[ot] || "#aaa";
+        if (count > 0 && legBody) {
+            var item = document.createElement("div");
+            item.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;";
+            item.innerHTML = '<span style="width:9px;height:9px;border-radius:2px;background:' + color + ';flex-shrink:0;display:inline-block;"></span>' +
+                             '<span style="flex:1;">' + ot + '</span>' +
+                             '<span style="color:#888;font-weight:600;">' + count + '</span>';
+            legBody.appendChild(item);
         }
     });
 

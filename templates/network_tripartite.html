@@ -60,13 +60,30 @@
   /* ── Legend ── */
   #legend {
     position: fixed; top: 20px; left: 20px;
-    background: rgba(255,255,255,0.97);
-    border: 1px solid #ddd; border-radius: 10px;
-    padding: 14px 18px; font-size: 12px; color: #111;
-    z-index: 999; line-height: 2; max-height: 90vh;
-    overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    min-width: 220px; max-width: 240px;
+    width: 230px; max-height: 85vh; overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ddd; border-radius: 8px;
+    z-index: 999;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
   }
+  .leg-header { padding: 10px 12px 8px; background: #003366; border-radius: 8px 8px 0 0; }
+  .leg-title { display: block; font-size: 11px; font-weight: 700; color: white; letter-spacing: 0.02em; margin-bottom: 2px; }
+  .leg-hint { display: block; font-size: 9px; color: rgba(255,255,255,0.6); font-style: italic; line-height: 1.4; }
+  .leg-section { border-bottom: 1px solid #f0f0f0; }
+  .leg-section:last-of-type { border-bottom: none; }
+  .leg-summary {
+    cursor: pointer; list-style: none; padding: 8px 12px;
+    font-size: 10px; font-weight: 700; color: #003366;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    display: flex; align-items: center; justify-content: space-between;
+    user-select: none; background: #fafafa; transition: background 0.12s;
+  }
+  .leg-summary::-webkit-details-marker { display: none; }
+  .leg-summary::after { content: "▶"; font-size: 7px; color: #aaa; transition: transform 0.15s; }
+  details[open] .leg-summary::after { transform: rotate(90deg); }
+  .leg-summary:hover { background: #E8F0F7; }
+  .leg-body { padding: 6px 12px 10px; font-size: 11px; line-height: 1.7; color: #444; }
+  .leg-body p { margin-bottom: 4px; font-size: 10px; color: #555; }
   .section-divider {
     border-top: 1px solid #eee; margin: 10px 0 8px; padding-top: 8px;
   }
@@ -120,79 +137,79 @@
 
 <!-- Legend -->
 <div id="legend">
-  <b style="font-size:13px;color:#003366;">Science Field ↔ Staff ↔ Division, Office, or Branch</b><br><br>
-  <!-- Column key diagram -->
-  <div style="display:flex; gap:4px; margin-bottom:12px; font-size:10px; align-items:center;">
-    <div style="text-align:center; flex:1;">
-      <div style="width:10px;height:10px;border-radius:50%;background:#1E88E5;margin:0 auto 2px;"></div>
-      <div style="color:#555; font-weight:600;">Science</div>
-      <div style="color:#555; font-weight:600;">Fields</div>
-      <div style="color:#aaa;">(left)</div>
+
+  <!-- ── Header (always visible) ── -->
+  <div class="leg-header">
+    <span class="leg-title">Organizational Network</span>
+    <span class="leg-hint">Hover to highlight · Click to pin</span>
+  </div>
+
+  <!-- ── How to use ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">How to use</summary>
+    <div class="leg-body">
+      <p>Click any <strong>node</strong> to highlight its direct connections across all three columns.</p>
+      <p>Science fields are left, DWR staff are center, divisions/offices/branches are right.</p>
+      <p>Note: only partnerships where staff are listed as primary POC are shown.</p>
     </div>
-    <div style="color:#ccc; font-size:14px; padding-bottom:12px;">↔</div>
-    <div style="text-align:center; flex:1;">
-      <div style="width:10px;height:10px;border-radius:50%;background:#81C784;margin:0 auto 2px;"></div>
-      <div style="color:#555; font-weight:600;">DWR</div>
-      <div style="color:#555; font-weight:600;">Staff</div>
-      <div style="color:#aaa;">(center)</div>
+  </details>
+
+  <!-- ── Column Guide ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Column Guide</summary>
+    <div class="leg-body">
+      <div style="display:flex;gap:4px;align-items:center;font-size:10px;">
+        <div style="text-align:center;flex:1;">
+          <div style="width:9px;height:9px;border-radius:50%;background:#1E88E5;margin:0 auto 3px;"></div>
+          <div style="color:#555;font-weight:600;">Science<br>Fields</div>
+          <div style="color:#aaa;font-size:9px;">(left)</div>
+        </div>
+        <div style="color:#ccc;">↔</div>
+        <div style="text-align:center;flex:1;">
+          <div style="width:9px;height:9px;border-radius:50%;background:#81C784;margin:0 auto 3px;"></div>
+          <div style="color:#555;font-weight:600;">DWR<br>Staff</div>
+          <div style="color:#aaa;font-size:9px;">(center)</div>
+        </div>
+        <div style="color:#ccc;">↔</div>
+        <div style="text-align:center;flex:1;">
+          <div style="width:9px;height:9px;border-radius:50%;background:#FFB74D;margin:0 auto 3px;"></div>
+          <div style="color:#555;font-weight:600;">Div/Office<br>/Branch</div>
+          <div style="color:#aaa;font-size:9px;">(right)</div>
+        </div>
+      </div>
     </div>
-    <div style="color:#ccc; font-size:14px; padding-bottom:12px;">↔</div>
-    <div style="text-align:center; flex:1;">
-      <div style="width:10px;height:10px;border-radius:50%;background:#FFB74D;margin:0 auto 2px;"></div>
-      <div style="color:#555; font-weight:600;">Div/Office</div>
-      <div style="color:#555; font-weight:600;">/Branch</div>
-      <div style="color:#aaa;">(right)</div>
+  </details>
+
+  <!-- ── Science Categories ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Science Categories</summary>
+    <div class="leg-body">
+      <div><span style="color:#1E88E5;font-size:13px;">●</span> <span>Biological and Ecological Sciences</span></div>
+      <div><span style="color:#43A047;font-size:13px;">●</span> <span>Climate Change Science and Adaptation</span></div>
+      <div><span style="color:#E53935;font-size:13px;">●</span> <span>Computer and Information Sciences</span></div>
+      <div><span style="color:#8E24AA;font-size:13px;">●</span> <span>Engineering</span></div>
+      <div><span style="color:#F4511E;font-size:13px;">●</span> <span>Geological and Earth Sciences</span></div>
+      <div><span style="color:#00ACC1;font-size:13px;">●</span> <span>Planning and Social Sciences</span></div>
+      <div><span style="color:#FB8C00;font-size:13px;">●</span> <span>Atmospheric Sciences</span></div>
     </div>
-  </div>
-  <hr style="border:none;border-top:1px solid #eee;margin:0 0 10px;">
-  <b style="color:#003366;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Science Categories</b>
-  
-  <div>
-    <span style="color:#1E88E5;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Biological and Ecological Sciences</span>
-  </div>
-  
-  <div>
-    <span style="color:#43A047;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Climate Change Science and Adaptation</span>
-  </div>
-  
-  <div>
-    <span style="color:#E53935;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Computer and Information Sciences</span>
-  </div>
-  
-  <div>
-    <span style="color:#8E24AA;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Engineering</span>
-  </div>
-  
-  <div>
-    <span style="color:#F4511E;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Geological and Earth Sciences</span>
-  </div>
-  
-  <div>
-    <span style="color:#00ACC1;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Planning and Social Sciences</span>
-  </div>
-  
-  <br>
-  <div>
-    <span style="color:#81C784;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Staff</span>
-  </div>
-  <div>
-    <span style="color:#FFB74D;font-size:15px;">●</span>
-    <span style="font-size:11px;"> Division</span>
-  </div>
-  <br>
-  <span style="color:#888;font-size:10px;">
-    Hover to highlight · Click to pin
-  </span>
-  <div id="spark-fields"    class="section-divider"></div>
-  <div id="spark-staff"     class="section-divider"></div>
-  <div id="spark-divisions" class="section-divider"></div>
+  </details>
+
+  <!-- ── Top 5 Staff ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Top 5 Staff</summary>
+    <div class="leg-body" id="top-staff-list">
+      <!-- populated by JS -->
+    </div>
+  </details>
+
+  <!-- ── Top 5 Science Fields ── -->
+  <details class="leg-section">
+    <summary class="leg-summary">Top 5 Science Fields</summary>
+    <div class="leg-body" id="tri-top-fields">
+      <!-- populated by JS spark chart data -->
+    </div>
+  </details>
+
 </div>
 
 <!-- Summary Panel -->
@@ -421,6 +438,21 @@ function buildSparkSections() {
     topF.forEach(function(n) { fHtml += sparkRow(n.id, nodeMeta[n.id].color, nodeDegree[n.id]||0, maxF); });
     document.getElementById("spark-fields").innerHTML = fHtml;
 
+    // Populate accordion: Top 5 Science Fields
+    var accFields = document.getElementById("tri-top-fields");
+    if (accFields) {
+        accFields.innerHTML = "";
+        topF.forEach(function(n) {
+            var row = document.createElement("div");
+            row.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;";
+            var pct = maxF > 0 ? Math.round((nodeDegree[n.id]||0) / maxF * 100) : 0;
+            row.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + nodeMeta[n.id].color + ';flex-shrink:0;display:inline-block;"></span>' +
+                            '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + n.id + '">' + n.id + '</span>' +
+                            '<span style="color:#888;font-weight:600;">' + (nodeDegree[n.id]||0) + '</span>';
+            accFields.appendChild(row);
+        });
+    }
+
     // Top 5 Divisions
     var topD  = divisionNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
     var maxD  = nodeDegree[topD[0].id] || 1;
@@ -431,6 +463,20 @@ function buildSparkSections() {
     // Top 5 Staff by science / by division
     var topSS  = staffNodes.slice().sort(function(a,b) { return (staffScienceDeg[b.id]||0)-(staffScienceDeg[a.id]||0); }).slice(0,5);
     var maxSS  = staffScienceDeg[topSS[0].id] || 1;
+
+    // Populate accordion: Top 5 Staff
+    var accStaff = document.getElementById("top-staff-list");
+    if (accStaff) {
+        accStaff.innerHTML = "";
+        topSS.forEach(function(n) {
+            var row = document.createElement("div");
+            row.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;";
+            row.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#81C784;flex-shrink:0;display:inline-block;"></span>' +
+                            '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + n.id + '">' + n.id + '</span>' +
+                            '<span style="color:#888;font-weight:600;">' + (staffScienceDeg[n.id]||0) + '</span>';
+            accStaff.appendChild(row);
+        });
+    }
     var topSD  = staffNodes.slice().sort(function(a,b) { return (staffDivisionDeg[b.id]||0)-(staffDivisionDeg[a.id]||0); }).slice(0,5);
     var maxSD  = staffDivisionDeg[topSD[0].id] || 1;
     var sHtml  = '<div class="section-title">Top 5 Staff — by Science Fields</div>';

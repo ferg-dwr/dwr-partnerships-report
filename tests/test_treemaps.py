@@ -13,6 +13,10 @@ from dwr_report.charts.treemaps import treemap, treemap_coverage
 from dwr_report.ingest.loader import PartnershipData
 from dwr_report.ingest.taxonomy import enrich_science_fields
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
 BASE_ROW = {
     "ID": 1,
     "Partnership Organization Name": '["UC Davis"]',
@@ -55,6 +59,11 @@ def make_data(tmp_path: Path, rows: list[dict] | None = None) -> PartnershipData
     rows = rows or [BASE_ROW]
     p = write_csv(tmp_path, "data.csv", rows)
     return PartnershipData(p)
+
+
+# ---------------------------------------------------------------------------
+# treemap()
+# ---------------------------------------------------------------------------
 
 
 class TestTreemap:
@@ -113,6 +122,11 @@ class TestTreemap:
         assert isinstance(fig, go.Figure)
 
 
+# ---------------------------------------------------------------------------
+# treemap_coverage()
+# ---------------------------------------------------------------------------
+
+
 class TestTreemapCoverage:
     def test_returns_figure(self, tmp_path):
         import plotly.graph_objects as go
@@ -133,9 +147,9 @@ class TestTreemapCoverage:
         labels = fig.data[0].labels
         assert "Climatology" in labels or "Meteorology" in labels
 
-    def test_custom_title(self, tmp_path):
+    def test_no_title(self, tmp_path):
         data = make_data(tmp_path)
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         enrich_science_fields(data, tax_p)
-        fig = treemap_coverage(data, tax_p, title="Coverage Chart")
-        assert fig.layout.title.text == "Coverage Chart"
+        fig = treemap_coverage(data, tax_p)
+        assert not fig.layout.title.text
