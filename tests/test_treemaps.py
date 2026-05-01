@@ -128,28 +128,27 @@ class TestTreemap:
 
 
 class TestTreemapCoverage:
-    def test_returns_figure(self, tmp_path):
-        import plotly.graph_objects as go
-
+    def test_returns_html_string(self, tmp_path):
         data = make_data(tmp_path)
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         enrich_science_fields(data, tax_p)
-        fig = treemap_coverage(data, tax_p)
-        assert isinstance(fig, go.Figure)
+        html = treemap_coverage(data, tax_p)
+        assert isinstance(html, str)
+        assert len(html) > 100
 
     def test_includes_zero_count_fields(self, tmp_path):
-        """Fields with no partnerships should still appear in the chart."""
+        """Fields with no partnerships should still appear in the taxonomy JSON."""
         data = make_data(tmp_path)  # Only has Hydrology
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         enrich_science_fields(data, tax_p)
-        fig = treemap_coverage(data, tax_p)
-        # Climatology and Meteorology have 0 partnerships but should be in labels
-        labels = fig.data[0].labels
-        assert "Climatology" in labels or "Meteorology" in labels
+        html = treemap_coverage(data, tax_p)
+        # Climatology and Meteorology have 0 partnerships but appear in taxonomy
+        assert "Climatology" in html or "Meteorology" in html
 
-    def test_no_title(self, tmp_path):
+    def test_contains_taxonomy_json(self, tmp_path):
         data = make_data(tmp_path)
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         enrich_science_fields(data, tax_p)
-        fig = treemap_coverage(data, tax_p)
-        assert not fig.layout.title.text
+        html = treemap_coverage(data, tax_p)
+        assert "window.DWR_TAXONOMY" in html
+        assert "subfields" in html

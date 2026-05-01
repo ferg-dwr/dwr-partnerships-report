@@ -1,7 +1,10 @@
 """
-treemaps.py — Plotly treemap chart generators.
+treemaps.py — Treemap chart generators.
 
-All functions accept a PartnershipData instance and return a Plotly Figure.
+treemap()          — Plotly treemap for ad-hoc notebook use.
+treemap_coverage() — Custom SVG treemap (squarified layout, React/Babel)
+                     rendered from templates/treemap_coverage.html.
+                     Returns a self-contained HTML string.
 """
 
 from __future__ import annotations
@@ -11,8 +14,11 @@ from typing import Any
 
 import pandas as pd
 import plotly.express as px
+from jinja2 import Environment, FileSystemLoader
 
 from dwr_report.ingest.loader import PartnershipData, normalize_colname
+
+TREEMAP_TEMPLATE = Path("templates/treemap_coverage.html")
 
 
 def treemap(
@@ -23,18 +29,16 @@ def treemap(
     color: str | None = None,
 ) -> Any:
     """
-    Generate an interactive treemap chart.
+    Generate an interactive Plotly treemap.
 
     Columns in `path` containing lists are automatically parsed and exploded.
     If no values column is provided, defaults to counting partnerships.
 
     :param data:   PartnershipData instance
-    :param path:   List of column names defining the hierarchy,
-                   e.g. ['1st Level Science Category', 'Science and Technology Fields']
-    :param values: Optional numeric column for block size.
-                   Defaults to partnership count when None.
+    :param path:   List of column names defining the hierarchy
+    :param values: Optional numeric column for block size
     :param title:  Chart title
-    :param color:  Optional column name for continuous color scaling
+    :param color:  Optional column for continuous color scaling
     :return:       Plotly Figure
     """
     df_plot = data.prepare_plot_df(path)
@@ -58,34 +62,19 @@ def treemap(
         textinfo="label+value+percent root",
         hovertemplate="<b>%{label}</b><br>Partnerships: %{value}<br>% of Total: %{percentRoot:.1%}",
     )
-
-    fig.update_layout(
-        title_font_size=20,
-        margin=dict(t=50, l=10, r=10, b=10),
-    )
-
+    fig.update_layout(title_font_size=20, margin=dict(t=50, l=10, r=10, b=10))
     return fig
 
 
-def treemap_coverage(
+def _build_taxonomy_json(
     data: PartnershipData,
     taxonomy_path: str | Path,
-    title: str = "DWR Science Partnership Coverage (Grey = Gap; Darker Blue = More Partnerships)",
-) -> Any:
+) -> list[dict]:
     """
-    Generate a coverage treemap built from the taxonomy as the base,
-    so that fields with zero partnerships are still represented (shown in grey).
+    Build the DWR_TAXONOMY structure from the taxonomy CSV and partnership data.
 
-    Darker blue = more partnerships. Grey = gap (no partnerships).
-    Requires enrich_science_fields() to have been called first on `data`.
-
-    :param data:          PartnershipData instance (must be enriched)
-    :param taxonomy_path: Path to the taxonomy CSV
-    :param title:         Chart title
-    :return:              Plotly Figure
+    Returns [{category, subfields:[{name, count}]}] for injection into the template.
     """
-    import numpy as np
-
     taxonomy = pd.read_csv(taxonomy_path, dtype=str)
     taxonomy.columns = [normalize_colname(c) for c in taxonomy.columns]
     taxonomy = taxonomy.rename(columns={"2nd level (Science Field)": "2nd Level (Science Field)"})
@@ -97,6 +86,7 @@ def treemap_coverage(
     taxonomy = taxonomy.replace({"nan": pd.NA, "": pd.NA})
     taxonomy = taxonomy.dropna(subset=path_cols).copy()
 
+    # Count partnerships per science field
     field_counts = (
         data.df["Science and Technology Fields"]
         .explode()
@@ -115,58 +105,42 @@ def treemap_coverage(
         .astype(int)
     )
 
-    max_count = taxonomy["Count"].max()
-    taxonomy["NormCount"] = taxonomy["Count"] / max_count if max_count > 0 else 0.01
-    taxonomy["ColorValue"] = taxonomy["NormCount"]
-    taxonomy.loc[taxonomy["Count"] == 0, "ColorValue"] = -0.01
-    taxonomy["Size"] = taxonomy["Count"].where(taxonomy["Count"] > 0, 1)
+    result: list[dict] = []
+    for cat, group in taxonomy.groupby("1st Level (Science Category)", sort=False):
+        subfields = [
+            {"name": row["2nd Level (Science Field)"], "count": int(row["Count"])}
+            for _, row in group.iterrows()
+        ]
+        result.append({"category": str(cat), "subfields": subfields})
 
-    color_scale = [
-        [0.0, "#D9D9D9"],
-        [0.01, "#DEEBF7"],
-        [0.5, "#6BAED6"],
-        [1.0, "#084594"],
-    ]
+    return result
 
-    fig = px.treemap(
-        taxonomy,
-        path=path_cols,
-        values="Size",
-        color="ColorValue",
-        color_continuous_scale=color_scale,
-        range_color=(-0.01, 1.0),
+
+def treemap_coverage(
+    data: PartnershipData,
+    taxonomy_path: str | Path,
+    template_path: Path = TREEMAP_TEMPLATE,
+) -> str:
+    """
+    Generate a coverage treemap as a self-contained HTML string.
+
+    Uses a custom squarified SVG layout (React + Babel, no Plotly).
+    The treemap grows vertically as the taxonomy expands — no horizontal squishing.
+
+    Blue hues (light → dark) = 1 → N partnerships.
+    Grey hatched cells = coverage gaps (0 partnerships).
+    Click a category header to zoom in; Esc or click header to zoom out.
+
+    :param data:          PartnershipData instance (must be enriched)
+    :param taxonomy_path: Path to dwr_custom_taxonomy.csv
+    :param template_path: Jinja2 template path
+    :return:              Self-contained HTML string
+    """
+    taxonomy_json = _build_taxonomy_json(data, taxonomy_path)
+
+    env = Environment(
+        loader=FileSystemLoader(str(template_path.parent)),
+        autoescape=False,
     )
-
-    # Build explicit color list — parent category rows get light blue header color
-    categories = taxonomy["1st Level (Science Category)"].unique().tolist()
-    explicit_colors = (
-        ["#C8E6FA"] * len(categories)  # parent rows: light DWR blue
-        + taxonomy["ColorValue"].tolist()  # child rows: existing scale
-    )
-
-    fig.update_traces(
-        hovertemplate="<b>%{label}</b><br>Partnerships: %{customdata[0]}<extra></extra>",
-        customdata=np.stack([taxonomy["Count"]], axis=-1),
-        textinfo="label",
-        marker=dict(
-            line=dict(width=2, color="white"),
-            pad=dict(t=22, l=4, r=4, b=4),
-            colors=explicit_colors,
-            colorscale=color_scale,
-            cmin=-0.01,
-            cmax=1.0,
-            showscale=False,
-        ),
-    )
-
-    fig.update_layout(
-        width=1100,
-        height=900,
-        margin=dict(t=10, l=20, r=20, b=20),
-        coloraxis_showscale=False,
-        title_font_size=20,
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-    )
-
-    return fig
+    template = env.get_template(template_path.name)
+    return template.render(taxonomy_json=taxonomy_json)

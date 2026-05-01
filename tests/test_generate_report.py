@@ -284,10 +284,9 @@ class TestBuildNetworkCharts:
 class TestAssembleHtml:
     def make_inputs(self) -> tuple[str, dict, dict, str, Path]:
         diff_banner = "<div class='diff-summary'>changes</div>"
-        charts = {
-            "treemap_coverage": "<div>treemap coverage</div>",
-        }
+        charts: dict = {}
         iframes = {
+            "treemap_coverage": "<iframe src='treemap_coverage.html'></iframe>",
             "network_tripartite": "<iframe src='network_tripartite.html'></iframe>",
             "network_bipartite": "<iframe src='network_bipartite.html'></iframe>",
         }
@@ -321,7 +320,7 @@ class TestAssembleHtml:
 
     def test_contains_chart_content(self):
         result = _assemble_html(*self.make_inputs())
-        assert "treemap coverage" in result
+        assert "treemap_coverage" in result
 
 
 # ---------------------------------------------------------------------------

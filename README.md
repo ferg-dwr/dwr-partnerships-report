@@ -3,8 +3,7 @@
 [![CI](https://github.com/ferg-dwr/dwr-partnerships-report/actions/workflows/ci.yml/badge.svg)](https://github.com/ferg-dwr/dwr-partnerships-report/actions/workflows/ci.yml)
 [![Report](https://github.com/ferg-dwr/dwr-partnerships-report/actions/workflows/generate-report.yml/badge.svg)](https://github.com/ferg-dwr/dwr-partnerships-report/actions/workflows/generate-report.yml)
 
-Automated report generation for DWR partnership data exported from Microsoft Lists.
-Upload a CSV → GitHub Actions diffs the data, flags anomalies, and publishes an updated report to GitHub Pages.
+Automated report pipeline for DWR Science & Technology Partnership data exported from Microsoft Lists. Upload a CSV → GitHub Actions diffs the data, flags anomalies, and publishes an updated interactive report to GitHub Pages.
 
 **[View the live report →](https://ferg-dwr.github.io/dwr-partnerships-report/)**
 
@@ -13,34 +12,65 @@ Upload a CSV → GitHub Actions diffs the data, flags anomalies, and publishes a
 ## How it works
 
 ```
-User downloads CSV from Microsoft Lists
+User exports CSV from Microsoft Lists
         ↓
-Drag & drop into upload UI (GitHub Pages)
+Drag & drop into Upload UI (GitHub Pages)
         ↓
 GitHub Contents API commits to data/latest.csv
         ↓
-GitHub Actions triggers automatically
+GitHub Actions triggers automatically on push to main
     ├── Diffs new CSV against previous commit
     ├── Runs ID watchdog (orphan + collision detection)
+    ├── Creates GitHub Issue changelog with diff summary
     ├── Generates interactive HTML report
-    │     ├── Partnerships by Science & Technology Field (treemap)
-    │     ├── Science Field Coverage Gap (treemap)
-    │     ├── Science Field ↔ Staff ↔ Division (network)
-    │     └── Division ↔ Partner Organization (network)
-    └── Publishes to GitHub Pages
+    │     ├── Science Field Coverage Gap (custom SVG treemap)
+    │     ├── Science Field ↔ Staff ↔ Division (vis.js network)
+    │     └── Division ↔ Partner Organization (vis.js network)
+    └── Publishes to GitHub Pages via Pages artifact
 ```
+
+The workflow triggers on changes to `data/latest.csv`, `templates/**`, or `dwr_report/**` — no manual trigger commits needed.
 
 ---
 
 ## For users: uploading new data
 
 1. Export your partnerships list from Microsoft Lists as a CSV
-2. Go to the **[Upload UI](https://ferg-dwr.github.io/dwr-partnerships-report/upload-ui/)**
-3. Drag and drop your CSV, enter your GitHub token, and click Upload
+2. Go to **[Upload UI →](https://ferg-dwr.github.io/dwr-partnerships-report/upload-ui/)**
+3. Drag and drop your CSV, enter your GitHub PAT, and click Upload
 4. Check the **[Actions tab](https://github.com/ferg-dwr/dwr-partnerships-report/actions)** — report regenerates in ~2 minutes
 5. View the updated report at **[ferg-dwr.github.io/dwr-partnerships-report](https://ferg-dwr.github.io/dwr-partnerships-report/)**
+6. A GitHub Issue is automatically created summarising new, removed, and updated partnerships
 
-> The upload UI never stores your token. It is used once to commit the file and then discarded.
+> Your token is never stored. It is used once to commit the CSV via the GitHub API and then discarded.
+
+---
+
+## Report features
+
+### Science Field Coverage (treemap)
+- Custom SVG treemap — no external charting library
+- Blue hues from 1 → N partnerships; grey hatched cells = coverage gaps
+- Grows vertically as the taxonomy expands — no horizontal squishing
+- Click a category header to zoom in; click again to zoom out
+
+### Organizational Network: Science ↔ Staff ↔ Division (tripartite)
+- **POC self-service filter** — search your name to highlight all your partnerships
+- Staff labels show `Last, F.` format with full name on hover
+- Click any node to see connected science fields and divisions
+- Accordion legend: How to use · Column Guide · Science Categories · Top 5 Staff · Top 5 Fields
+
+### Organizational Network: DWR ↔ Partner Organizations (bipartite)
+- Node size scales by total partnerships (degree-weighted)
+- Click a node → expandable table of connected partners, colored by org type
+- Click an edge → side-by-side entity header + flat partnership table
+- Hover a table row → highlights that node in the network
+- Accordion legend: How to use · Node Size · Partner Types · Top 5 Divisions · Top 5 Organizations
+
+### Diff banner
+- Shows new / removed / updated counts after each upload
+- Collapsed per-partnership cards showing before → after field changes
+- Collision warnings block publishing; orphan warnings are informational
 
 ---
 
@@ -50,44 +80,46 @@ GitHub Actions triggers automatically
 dwr-partnerships-report/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                  # Lint, type-check, test on every push/PR
-│       └── generate-report.yml     # Report pipeline (triggers on data/latest.csv change)
+│       ├── ci.yml                  # Lint + type-check + test on every push/PR
+│       └── generate-report.yml     # Report pipeline
 │
 ├── data/
 │   ├── latest.csv                  # Current dataset — git history = full audit trail
-│   └── dwr_custom_taxonomy.csv     # Science field taxonomy for coverage analysis
+│   └── dwr_custom_taxonomy.csv     # Science field taxonomy (categories + fields)
 │
 ├── dwr_report/                     # Main Python package
-│   ├── __init__.py                 # Public API — import anything from here
 │   ├── ingest/
-│   │   ├── loader.py               # PartnershipData class + normalization
-│   │   └── taxonomy.py             # load_taxonomy(), enrich_science_fields()
+│   │   ├── loader.py               # PartnershipData class + column normalization
+│   │   └── taxonomy.py             # enrich_science_fields()
 │   ├── charts/
-│   │   ├── treemaps.py             # treemap(), treemap_coverage()
-│   │   └── networks.py             # network_tripartite(), network_bipartite(), save_html()
-│   ├── pipeline/
-│   │   ├── diff.py                 # ID watchdog + change detection
-│   │   └── generate_report.py      # Orchestration: loads data → charts → HTML report
-│   └── utils/                      # Shared helpers (future use)
+│   │   ├── treemaps.py             # treemap_coverage() — renders treemap template
+│   │   └── networks.py             # network_tripartite(), network_bipartite()
+│   └── pipeline/
+│       ├── diff.py                 # ID watchdog + change detection
+│       ├── generate_report.py      # Orchestrator: data → charts → HTML report
+│       └── create_issue.py         # GitHub Issue changelog on each upload
 │
 ├── templates/
-│   ├── network_tripartite.html     # Jinja2 template: Science Field ↔ Staff ↔ Division
-│   └── network_bipartite.html      # Jinja2 template: Division ↔ Partner Organization
+│   ├── report.html                 # Jinja2: main report page (header, nav, layout)
+│   ├── treemap_coverage.html       # Custom SVG treemap (squarified layout)
+│   ├── network_tripartite.html     # Jinja2 + vis.js: Science ↔ Staff ↔ Division
+│   └── network_bipartite.html      # Jinja2 + vis.js: Division ↔ Partner Organization
 │
-├── tests/
-│   ├── test_diff.py                # ID watchdog + diff logic (28 tests)
-│   ├── test_loader.py              # Data loading and normalization (27 tests)
-│   ├── test_taxonomy.py            # Taxonomy enrichment (11 tests)
-│   ├── test_treemaps.py            # Plotly treemap charts (9 tests)
-│   └── test_networks.py            # vis.js network charts (15 tests)
+├── tests/                          # 161 tests, ~92% coverage
+│   ├── test_diff.py
+│   ├── test_loader.py
+│   ├── test_taxonomy.py
+│   ├── test_treemaps.py
+│   ├── test_networks.py
+│   ├── test_generate_report.py
+│   └── test_create_issue.py
 │
 ├── upload-ui/
-│   └── index.html                  # Drag-and-drop CSV uploader (no Git required)
+│   └── index.html                  # Drag-and-drop CSV uploader (GitHub Contents API)
 │
-├── reports/                        # Auto-generated HTML (committed by Actions only)
-├── pyproject.toml                  # Project config: ruff, mypy, pytest, setuptools
+├── pyproject.toml                  # ruff · mypy · pytest · setuptools
 ├── SETUP.md                        # First-time configuration guide
-└── .env.example                    # Environment variable template
+└── ROADMAP.md                      # Backlogged features and improvements
 ```
 
 ---
@@ -116,61 +148,55 @@ mypy dwr_report/                    # Type check
 pytest                              # Tests with coverage
 ```
 
-All three are enforced by CI on every push and pull request.
-
 ### Running the report locally
 
 ```bash
-# Create a dummy diff file if needed
+mkdir -p reports
 echo '{"new_ids":[],"removed_ids":[],"changed_rows":[],"warnings":[]}' > reports/diff.json
 
-# Generate the full report
 python dwr_report/pipeline/generate_report.py \
   --csv data/latest.csv \
   --diff reports/diff.json \
   --output reports/index.html \
   --taxonomy data/dwr_custom_taxonomy.csv
+
+cd reports && python -m http.server 8000
 ```
 
-### Using the package in notebooks
+> Hard-refresh (`Ctrl+Shift+R` / `Cmd+Shift+R`) after regenerating to bypass browser cache.
 
-```python
-from dwr_report import (
-    PartnershipData,
-    enrich_science_fields,
-    treemap,
-    treemap_coverage,
-    network_tripartite,
-    network_bipartite,
-)
+### Expanding the taxonomy
 
-data = PartnershipData("data/latest.csv")
-enrich_science_fields(data, "data/dwr_custom_taxonomy.csv")
-
-fig = treemap_coverage(data, "data/dwr_custom_taxonomy.csv")
-fig.show()
-```
+Edit `data/dwr_custom_taxonomy.csv` to add new science categories or fields. The treemap grows vertically to accommodate new entries — no layout code changes needed.
 
 ---
 
 ## ID watchdog
 
-The diff engine compares each new CSV upload against the previous version and flags two categories of anomaly:
-
-| Warning type | What it means | Action |
+| Warning type | Meaning | Action |
 |---|---|---|
-| **Orphan** | An ID in the previous data is missing from the upload | Verify the partnership was intentionally deleted in Microsoft Lists |
-| **Collision** | A shared ID has a significantly different organization name | Possible ID reuse — check Microsoft Lists before publishing |
+| **Orphan** | An ID in the previous data is missing from the upload | Verify the partnership was intentionally deleted |
+| **Collision** | A shared ID has a different organization name | Possible ID reuse — verify in Microsoft Lists before publishing |
 
-Orphan warnings are informational and do not block publishing. Collision warnings cause the Actions workflow to exit with code 2 and block the report from publishing until resolved.
+Orphan warnings are informational. Collision warnings exit the workflow with code 2, blocking the report until resolved.
+
+---
+
+## GitHub Issue changelog
+
+After every successful upload, a GitHub Issue is automatically created with:
+- New / removed / updated partnership counts
+- Per-partnership before → after field tables
+- ID collision and orphan warnings
+
+Labels (`data-update`, `new-partnerships`, `updated-partnerships`, `needs-review`) are created automatically, making the Issues tab a searchable change log over time.
 
 ---
 
 ## Branch strategy
 
 - **`develop`** — active development; CI runs on every push
-- **`main`** — production; merges from develop trigger report generation and Pages deployment
-- Pull requests should target `main` from `develop`
+- **`main`** — production; pushes here trigger report generation and Pages deployment
 
 ---
 

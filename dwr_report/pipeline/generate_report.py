@@ -151,8 +151,8 @@ def _build_plotly_charts(data: PartnershipData, taxonomy_path: Path) -> dict[str
     # TODO: Accept diff_result parameter to annotate newly added/removed fields
     if taxonomy_path.exists():
         enrich_science_fields(data, taxonomy_path)
-        fig = treemap_coverage(data, taxonomy_path)
-        charts["treemap_coverage"] = fig.to_html(full_html=False, include_plotlyjs="cdn")
+        # treemap_coverage returns a self-contained HTML string (custom SVG, no Plotly)
+        charts["treemap_coverage"] = treemap_coverage(data, taxonomy_path)
     else:
         print(
             f"  Warning: taxonomy file not found at '{taxonomy_path}' — skipping coverage treemap"
@@ -238,7 +238,7 @@ def _assemble_html(
     return template.render(
         generated_at=generated_at,
         diff_banner=diff_banner,
-        treemap_coverage=charts.get("treemap_coverage", ""),
+        iframe_treemap=iframes.get("treemap_coverage", ""),
         iframe_tripartite=iframes.get("network_tripartite", ""),
         iframe_bipartite=iframes.get("network_bipartite", ""),
     )
@@ -264,11 +264,20 @@ def generate(
     print("Loading data...")
     data = PartnershipData(csv_path)
 
-    print("Generating Plotly charts...")
+    print("Generating charts...")
     charts = _build_plotly_charts(data, taxonomy_path)
+
+    # Save treemap as standalone HTML (React/Babel — needs its own document)
+    treemap_path = output_dir / "treemap_coverage.html"
+    treemap_path.write_text(charts.get("treemap_coverage", ""), encoding="utf-8")
 
     print("Generating network charts...")
     iframes = _build_network_charts(data, output_dir, tripartite_template, bipartite_template)
+    iframes["treemap_coverage"] = (
+        "<iframe src='treemap_coverage.html' id='treemap-iframe' width='100%' "
+        "frameborder='0' scrolling='no' "
+        "style='border:none;outline:none;display:block;'></iframe>"
+    )
 
     print("Assembling report...")
     diff_banner = _diff_banner(diff_path)

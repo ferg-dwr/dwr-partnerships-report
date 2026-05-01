@@ -242,7 +242,10 @@
       border-radius: 0 4px 4px 0;
     }
     .chart-missing { color: #888; font-style: italic; padding: 1rem; background: var(--grey); border-radius: 4px; }
-    iframe { border-radius: 6px; display: block; border: 1px solid var(--border); }
+    .tm-stat-cell { flex: 1; padding: 0.75rem 1rem; background: white; }
+    .tm-stat-num  { font-size: 1.75rem; font-weight: 800; font-family: 'JetBrains Mono', ui-monospace, monospace; line-height: 1; margin-bottom: 0.2rem; }
+    .tm-stat-lbl  { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #888; }
+    iframe { border-radius: 0; display: block; border: none; outline: none; box-shadow: none; background: white; }
   </style>
 </head>
 <body>
@@ -277,11 +280,48 @@
 
   <div class="chart-section" id="treemap-coverage">
     <h2>Science Field Coverage</h2>
-    <p class="chart-context">
-      Darker blue indicates more partnerships in that science field. Grey fields have no current
-      partnerships — these represent potential coverage gaps.
-    </p>
-    {{ treemap_coverage }}
+
+    <!-- Summary bar — always visible above the treemap iframe -->
+    <div id="treemap-summary" style="margin-bottom:1rem;">
+      <p class="chart-context" style="margin-bottom:0.9rem;">
+        Each rectangle is a science subfield. Color and area both encode the number of
+        active DWR partnerships. Subfields with no current partnerships are flagged as
+        <strong>coverage gaps</strong>.
+      </p>
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:0.9rem;">
+        <div id="tm-stat-partnerships" class="tm-stat-cell" style="border-right:1px solid var(--border);">
+          <div class="tm-stat-num" style="color:var(--blue-dark);">—</div>
+          <div class="tm-stat-lbl">Partnerships</div>
+        </div>
+        <div id="tm-stat-fields" class="tm-stat-cell" style="border-right:1px solid var(--border);">
+          <div class="tm-stat-num" style="color:var(--blue-dark);">—</div>
+          <div class="tm-stat-lbl">Science Areas</div>
+        </div>
+        <div id="tm-stat-covered" class="tm-stat-cell" style="border-right:1px solid var(--border);">
+          <div class="tm-stat-num" style="color:var(--blue-dark);">—</div>
+          <div class="tm-stat-lbl">Subfields Covered</div>
+        </div>
+        <div id="tm-stat-gaps" class="tm-stat-cell">
+          <div class="tm-stat-num" style="color:#B85A1E;">—</div>
+          <div class="tm-stat-lbl">Coverage Gaps</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-size:11px;color:#666;margin-bottom:0.5rem;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#888;">Partnerships</span>
+          <div style="width:160px;height:10px;border-radius:2px;background:linear-gradient(90deg,#EAF2FA 0%,#B8D3EC 25%,#6AA5D2 50%,#2F6FB0 75%,#0B3D75 100%);border:1px solid rgba(11,31,51,.1);"></div>
+          <span id="tm-max-count" style="font-size:10px;color:#888;">—</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="display:inline-block;width:16px;height:10px;background:#E5E5E2;border-radius:2px;
+                background-image:repeating-linear-gradient(45deg,transparent 0 4px,#D2D2CE 4px 5px);
+                border:1px solid rgba(11,31,51,.1);vertical-align:middle;"></span>
+          <span>Coverage gap <span style="color:#aaa;">(0 partnerships)</span></span>
+        </div>
+      </div>
+    </div>
+
+    {{ iframe_treemap }}
   </div>
 
   <div class="chart-section" id="network-tripartite">
@@ -339,6 +379,36 @@
       });
       headerLinks.forEach(function(a) {
         a.classList.toggle('active', a.getAttribute('href').slice(1) === activeId);
+      });
+    }
+
+    // ── Auto-resize treemap iframe to its content height ──
+    window.addEventListener("message", function(e) {
+      if (e.data && e.data.type === "tm-height") {
+        var iframe = document.getElementById("treemap-iframe");
+        if (iframe) iframe.style.height = e.data.height + "px";
+      }
+    });
+
+    // ── Populate treemap summary from iframe data ──
+    var tmFrame = document.querySelector('#treemap-coverage iframe');
+    if (tmFrame) {
+      tmFrame.addEventListener('load', function() {
+        try {
+          var tax = tmFrame.contentWindow.DWR_TAXONOMY;
+          if (!tax) return;
+          var allCounts  = tax.flatMap(function(c) { return c.subfields.map(function(s) { return s.count; }); });
+          var totalPart  = allCounts.reduce(function(s,n) { return s+n; }, 0);
+          var totalGaps  = allCounts.filter(function(c) { return c===0; }).length;
+          var totalSubs  = allCounts.length;
+          var totalCats  = tax.length;
+          var maxCount   = Math.max.apply(null, allCounts);
+          document.getElementById('tm-stat-partnerships').querySelector('.tm-stat-num').textContent = totalPart;
+          document.getElementById('tm-stat-fields').querySelector('.tm-stat-num').textContent = totalCats;
+          document.getElementById('tm-stat-covered').querySelector('.tm-stat-num').textContent = (totalSubs-totalGaps) + '/' + totalSubs;
+          document.getElementById('tm-stat-gaps').querySelector('.tm-stat-num').textContent = totalGaps;
+          document.getElementById('tm-max-count').textContent = maxCount;
+        } catch(e) {}
       });
     }
 

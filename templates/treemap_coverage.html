@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: white; }
+  body { font-family: 'Public Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .tm-wrap { position: relative; width: 100%; }
+  .tm-stats {
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+    margin-bottom: 0.75rem; font-size: 12px;
+  }
+  .tm-stat { display: flex; flex-direction: column; align-items: center; }
+  .tm-stat .num {
+    font-size: 1.4rem; font-weight: 800;
+    font-family: 'JetBrains Mono', monospace; color: #003366;
+  }
+  .tm-stat .lbl { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+  .tm-stat.gap .num { color: #B85A1E; }
+  .tm-legend {
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    margin-bottom: 0.75rem; font-size: 11px;
+  }
+  .tm-legend-ramp { display: flex; align-items: center; gap: 8px; }
+  .tm-legend-bar {
+    width: 180px; height: 10px; border-radius: 2px;
+    background: linear-gradient(90deg, #EAF2FA 0%, #B8D3EC 25%, #6AA5D2 50%, #2F6FB0 75%, #0B3D75 100%);
+    border: 1px solid rgba(11,31,51,.1);
+  }
+  .tm-legend-labels {
+    display: flex; justify-content: space-between;
+    width: 180px; margin-left: -180px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
+    color: rgba(11,31,51,.5); pointer-events: none; padding-top: 13px;
+  }
+  .tm-gap-swatch {
+    display: inline-block; width: 16px; height: 10px;
+    background: #E5E5E2; border-radius: 2px;
+    background-image: repeating-linear-gradient(45deg, transparent 0 4px, #D2D2CE 4px 5px);
+    border: 1px solid rgba(11,31,51,.1); vertical-align: middle; margin-right: 4px;
+  }
+  .tm-tooltip {
+    position: absolute; pointer-events: none;
+    background: rgba(255,255,255,0.98); color: #0B1F33;
+    border: 1px solid rgba(11,31,51,.1);
+    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+    border-radius: 8px; padding: 10px 12px;
+    min-width: 160px; max-width: 260px;
+    font-size: 12px; line-height: 1.4; z-index: 100;
+  }
+  .tm-tooltip .cat {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; opacity: 0.5; margin-bottom: 2px;
+  }
+  .tm-tooltip .name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .tm-tooltip .count {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  }
+  .tm-tooltip .count .lbl { opacity: 0.6; }
+  .tm-tooltip .count .val { font-weight: 600; }
+  .tm-tooltip .count .val.gap { color: #B85A1E; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Injected by Jinja2 at report generation time -->
+<script>
+window.DWR_TAXONOMY = {{ taxonomy_json | tojson }};
+</script>
+
+<script type="text/babel">
+{%- raw %}
+// ─── Squarified treemap layout ────────────────────────────────────────────────
+function squarify(items, x, y, w, h) {
+  const result = [];
+  if (!items.length) return result;
+  const total = items.reduce((s, i) => s + i.value, 0);
+  if (total <= 0) return result;
+  const scale = (w * h) / total;
+  const scaled = items.map((i) => ({ ...i, area: i.value * scale }));
+  let rect = { x, y, w, h };
+  let row = [];
+
+  const worst = (row, side) => {
+    if (!row.length) return Infinity;
+    const sum = row.reduce((s, r) => s + r.area, 0);
+    const mn = Math.min(...row.map((r) => r.area));
+    const mx = Math.max(...row.map((r) => r.area));
+    const s2 = sum * sum, side2 = side * side;
+    return Math.max((side2 * mx) / s2, s2 / (side2 * mn));
+  };
+
+  const layoutRow = (row, rect) => {
+    const side = Math.min(rect.w, rect.h);
+    const sum = row.reduce((s, r) => s + r.area, 0);
+    const other = sum / side;
+    let cx = rect.x, cy = rect.y;
+    if (rect.w >= rect.h) {
+      for (const r of row) { const rh = r.area / other; result.push({ x: cx, y: cy, w: other, h: rh, datum: r.datum }); cy += rh; }
+      return { x: rect.x + other, y: rect.y, w: rect.w - other, h: rect.h };
+    } else {
+      for (const r of row) { const rw = r.area / other; result.push({ x: cx, y: cy, w: rw, h: other, datum: r.datum }); cx += rw; }
+      return { x: rect.x, y: rect.y + other, w: rect.w, h: rect.h - other };
+    }
+  };
+
+  let i = 0;
+  while (i < scaled.length) {
+    const item = scaled[i];
+    const side = Math.min(rect.w, rect.h);
+    const newRow = [...row, item];
+    if (!row.length || worst(newRow, side) <= worst(row, side)) { row = newRow; i++; }
+    else { rect = layoutRow(row, rect); row = []; }
+  }
+  if (row.length) layoutRow(row, rect);
+  return result;
+}
+
+function layoutTreemap(data, width, height, opts = {}) {
+  const { headerH = 28, gap = 3, minGapValue = 0.18, inset = 6 } = opts;
+  const allCounts = data.flatMap((c) => c.subfields.map((s) => s.count));
+  const nonZero = allCounts.filter((c) => c > 0);
+  const mean = nonZero.reduce((a, b) => a + b, 0) / Math.max(1, nonZero.length);
+  const gapVal = Math.max(1, mean * minGapValue);
+
+  const cats = data.map((c) => {
+    const subs = c.subfields.map((s) => ({
+      value: s.count > 0 ? s.count : gapVal,
+      datum: { ...s, category: c.category },
+    })).sort((a, b) => b.value - a.value);
+    return { category: c.category, subs, total: subs.reduce((s, i) => s + i.value, 0) };
+  });
+
+  const catRects = squarify(
+    cats.map((c) => ({ value: c.total, datum: c })).sort((a, b) => b.value - a.value),
+    0, 0, width, height
+  );
+
+  return catRects.map((r) => {
+    const cat = r.datum;
+    const subRects = squarify(cat.subs, r.x + inset, r.y + headerH, Math.max(0, r.w - inset * 2), Math.max(0, r.h - headerH - inset));
+    return {
+      frame: { x: r.x, y: r.y, w: r.w, h: r.h },
+      header: {
+        x: r.x, y: r.y, w: r.w, headerH,
+        category: cat.category,
+        total: cat.subs.reduce((s, i) => s + (i.datum.count > 0 ? i.datum.count : 0), 0),
+        gapCount: cat.subs.filter((i) => i.datum.count === 0).length,
+      },
+      cells: subRects.map((sr) => ({
+        x: sr.x + gap / 2, y: sr.y + gap / 2,
+        w: Math.max(0, sr.w - gap), h: Math.max(0, sr.h - gap),
+        datum: sr.datum,
+      })),
+    };
+  });
+}
+
+function layoutSingle(catData, width, height, opts = {}) {
+  const { headerH = 36, gap = 4, minGapValue = 0.18, inset = 8 } = opts;
+  const nonZero = catData.subfields.filter((s) => s.count > 0);
+  const mean = nonZero.reduce((a, b) => a + b.count, 0) / Math.max(1, nonZero.length);
+  const gapVal = Math.max(1, mean * minGapValue);
+  const subs = catData.subfields.map((s) => ({
+    value: s.count > 0 ? s.count : gapVal,
+    datum: { ...s, category: catData.category },
+  })).sort((a, b) => b.value - a.value);
+  const subRects = squarify(subs, inset, headerH, Math.max(0, width - inset * 2), Math.max(0, height - headerH - inset));
+  return {
+    frame: { x: 0, y: 0, w: width, h: height },
+    header: {
+      x: 0, y: 0, w: width, headerH,
+      category: catData.category,
+      total: subs.reduce((s, i) => s + (i.datum.count > 0 ? i.datum.count : 0), 0),
+      gapCount: subs.filter((i) => i.datum.count === 0).length,
+    },
+    cells: subRects.map((sr) => ({
+      x: sr.x + gap / 2, y: sr.y + gap / 2,
+      w: Math.max(0, sr.w - gap), h: Math.max(0, sr.h - gap),
+      datum: sr.datum,
+    })),
+  };
+}
+
+// ─── Color utils ──────────────────────────────────────────────────────────────
+const STOPS = [[0, "#EAF2FA"], [0.25, "#B8D3EC"], [0.5, "#6AA5D2"], [0.75, "#2F6FB0"], [1.0, "#0B3D75"]];
+const GAP   = { fill: "#E5E5E2", text: "#7A7A75", hatch: "#D2D2CE" };
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function hexRgb(hex) { const h = hex.slice(1); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function rgbHex([r,g,b]) { return "#" + [r,g,b].map((v) => Math.round(v).toString(16).padStart(2,"0")).join(""); }
+
+function rampColor(t) {
+  for (let i = 1; i < STOPS.length; i++) {
+    if (t <= STOPS[i][0]) {
+      const [t0,c0] = STOPS[i-1], [t1,c1] = STOPS[i];
+      const k = (t-t0)/(t1-t0);
+      const a = hexRgb(c0), b = hexRgb(c1);
+      return rgbHex([lerp(a[0],b[0],k), lerp(a[1],b[1],k), lerp(a[2],b[2],k)]);
+    }
+  }
+  return STOPS[STOPS.length-1][1];
+}
+
+function textOn(hex) {
+  const [r,g,b] = hexRgb(hex);
+  return (0.2126*r + 0.7152*g + 0.0722*b) < 140 ? "#FFFFFF" : "#0B1F33";
+}
+
+// Parent header fill — tinted by category total
+function parentFill(catName, taxonomy, maxTotal) {
+  const cat = taxonomy.find((c) => c.category === catName);
+  const tot = cat ? cat.subfields.reduce((s,f) => s + f.count, 0) : 0;
+  const norm = maxTotal > 0 ? tot / maxTotal : 0;
+  const k = 0.55 + 0.45 * norm;
+  return rampColor(k);
+}
+
+// ─── Label fitting ────────────────────────────────────────────────────────────
+function fitLabel(name, w, h, { minSize = 9, maxSize = 13, padding = 7 } = {}) {
+  const iW = w - padding*2, iH = h - padding*2;
+  if (iW < 14 || iH < 14) return null;
+  const words = name.split(/\s+/);
+  for (let size = maxSize; size >= minSize; size--) {
+    const cW = size * 0.55, lH = size * 1.15;
+    const lines = []; let cur = "";
+    for (const wd of words) {
+      const test = cur ? cur + " " + wd : wd;
+      if (test.length * cW <= iW || !cur) cur = test;
+      else { lines.push(cur); cur = wd; }
+    }
+    if (cur) lines.push(cur);
+    if (Math.max(...lines.map((l) => l.length * cW)) <= iW && lines.length * lH <= iH) {
+      return { lines, size, lineH: lH };
+    }
+  }
+  return null;
+}
+
+// ─── Cell ─────────────────────────────────────────────────────────────────────
+function Cell({ rect, datum, maxCount, onHover, onLeave }) {
+  const isGap = datum.count === 0;
+  const t = maxCount > 0 && !isGap ? datum.count / maxCount : -1;
+  const fill = isGap ? GAP.fill : rampColor(t);
+  const fg   = isGap ? GAP.text : textOn(fill);
+  let label  = fitLabel(datum.name, rect.w, rect.h, isGap ? { maxSize: 12, minSize: 7 } : {});
+  let rotated = false;
+  if (!label && isGap) {
+    const r = fitLabel(datum.name, rect.h, rect.w, { maxSize: 11, minSize: 7 });
+    if (r) { label = r; rotated = true; }
+  }
+  if (!label && isGap && rect.h >= 14 && rect.w >= 24) {
+    const size = 8, cW = size*0.55, iW = Math.max(0, rect.w-10);
+    const maxC = Math.max(2, Math.floor(iW/cW));
+    const trunc = datum.name.length > maxC ? datum.name.slice(0, maxC-1) + "…" : datum.name;
+    label = { lines: [trunc], size, lineH: size*1.15 };
+  }
+  // Only show count on non-gap cells — gaps are already visually communicated
+  const showCount = !isGap && !rotated && rect.w >= 60 && rect.h >= 36 && label && label.lines.length <= 3;
+
+  return (
+    <g onMouseEnter={(e) => onHover(e, datum)} onMouseMove={(e) => onHover(e, datum)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
+      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.h} fill={fill} stroke="white" strokeWidth={1} rx={2}/>
+      {isGap && (
+        <rect x={rect.x} y={rect.y} width={rect.w} height={rect.h}
+              fill="url(#hatch)" rx={2} pointerEvents="none"/>
+      )}
+      {label && !rotated && (
+        <text x={rect.x+7} y={rect.y+7+label.size*0.85} fill={fg}
+              style={{ fontFamily:"'Public Sans',system-ui,sans-serif", fontWeight: isGap?500:600, fontSize: label.size, pointerEvents:"none" }}>
+          {label.lines.map((l,i) => <tspan key={i} x={rect.x+7} dy={i===0?0:label.lineH}>{l}</tspan>)}
+        </text>
+      )}
+      {label && rotated && (
+        <text x={rect.x+rect.w/2} y={rect.y+rect.h/2} fill={fg} textAnchor="middle"
+              transform={`rotate(-90 ${rect.x+rect.w/2} ${rect.y+rect.h/2})`}
+              style={{ fontFamily:"'Public Sans',system-ui,sans-serif", fontWeight:500, fontSize:label.size, pointerEvents:"none" }}>
+          {label.lines.map((l,i) => <tspan key={i} x={rect.x+rect.w/2} dy={i===0?-((label.lines.length-1)*label.lineH)/2:label.lineH}>{l}</tspan>)}
+        </text>
+      )}
+      {showCount && (
+        <text x={rect.x+7} y={rect.y+rect.h-7} fill={fg} opacity={0.75}
+              style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, fontWeight:500, pointerEvents:"none" }}>
+          {datum.count}
+        </text>
+      )}
+    </g>
+  );
+}
+
+// ─── Category header ──────────────────────────────────────────────────────────
+function CategoryHeader({ header, fill, isZoomed, onClick, hover, onEnter, onLeave, hoverAccent = false }) {
+  const { x, y, w, headerH, category, total, gapCount } = header;
+  const hFill = hover ? "#1456A0" : fill;
+  // Adaptive meta
+  const metaLong  = `${total} partnership${total!==1?"s":""}${gapCount>0?` · ${gapCount} gap${gapCount!==1?"s":""}` : ""}`;
+  const metaShort = `${total}p${gapCount>0?` · ${gapCount}g`:""}`;
+  const meta = (metaLong.length * 6.5 < w - 20) ? metaLong : metaShort;
+  const clipId = `hdr-${Math.round(x)}-${Math.round(y)}`;
+  const pad = isZoomed ? 22 : 10;
+  const metaSize = isZoomed ? 11 : 9.5;
+  const titleY = y + headerH * 0.38;
+  const metaY  = y + headerH * 0.72;
+
+  // Dynamic title font size — shrink to fit the available width
+  const maxTitleW = w - pad * 2 - (isZoomed ? 18 : 0);
+  let titleSize = isZoomed ? 15 : 11.5;
+  const charW = titleSize * 0.58;
+  if (category.length * charW > maxTitleW && !isZoomed) {
+    titleSize = Math.max(8, Math.floor(maxTitleW / (category.length * 0.58)));
+  }
+
+  return (
+    <g onClick={onClick}
+       onMouseEnter={onEnter} onMouseLeave={onLeave}
+       style={{ cursor:"pointer" }}>
+      <defs><clipPath id={clipId}><rect x={x} y={y} width={Math.max(0,w)} height={headerH}/></clipPath></defs>
+      {/* Full-height header rect — same hover state as parent frame */}
+      <rect x={x} y={y} width={w} height={headerH} fill={hFill} rx={3} style={{ transition:"fill .15s" }}/>
+      <g clipPath={`url(#${clipId})`} pointerEvents="none">
+        {isZoomed && (
+          <path d={`M ${x+14} ${y+headerH/2-5} L ${x+6} ${y+headerH/2} L ${x+14} ${y+headerH/2+5}`}
+                stroke={hover && hoverAccent ? "#FFD580" : "white"}
+                strokeWidth={1.8} fill="none" strokeLinecap="round"
+                style={{ transition:"stroke .15s" }}/>
+        )}
+        <text x={x+pad} y={titleY} fill="white"
+              style={{ fontFamily:"'Public Sans',system-ui,sans-serif", fontWeight:700, fontSize:titleSize, letterSpacing:"0.005em" }}>
+          {category}
+        </text>
+        <text x={x+pad} y={metaY}
+              fill={hover && hoverAccent ? "#FFD580" : "rgba(255,255,255,0.65)"}
+              style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:metaSize, transition:"fill .15s" }}>
+          {meta}
+        </text>
+      </g>
+    </g>
+  );
+}
+
+// ─── Hatch pattern ────────────────────────────────────────────────────────────
+function HatchDef() {
+  return (
+    <defs>
+      <pattern id="hatch" patternUnits="userSpaceOnUse" width={6} height={6} patternTransform="rotate(45)">
+        <line x1={0} y1={0} x2={0} y2={6} stroke={GAP.hatch} strokeWidth={1.6}/>
+      </pattern>
+    </defs>
+  );
+}
+
+// ─── postHeight — tells parent iframe our scroll height ──────────────────────
+function postHeight() {
+  var h = document.body.scrollHeight || document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: "tm-height", height: h }, "*");
+}
+
+// ─── CategoryGroup — frame + header sharing a single hover state ─────────────
+function CategoryGroup({ cat, fill, isZoomed, onZoom, maxCount, onHover, onLeave, hatchGaps }) {
+  const [hover, setHover] = React.useState(false);
+  const hFill = hover ? "#1456A0" : fill;
+  return (
+    <g onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      {/* Parent frame */}
+      <rect x={cat.frame.x} y={cat.frame.y} width={cat.frame.w} height={cat.frame.h}
+            fill={hFill} rx={3} onClick={onZoom} style={{ cursor:"pointer", transition:"fill .15s" }}/>
+      {/* Child cells */}
+      {cat.cells.map((c, i) => (
+        <Cell key={i} rect={c} datum={c.datum} maxCount={maxCount}
+              onHover={onHover} onLeave={onLeave}/>
+      ))}
+      {/* Header text — shares hover state */}
+      <CategoryHeader header={cat.header} fill={fill} isZoomed={isZoomed}
+                      onClick={onZoom} hover={hover}
+                      onEnter={() => setHover(true)} onLeave={() => setHover(false)}/>
+    </g>
+  );
+}
+
+// ─── ZoomedGroup — zoomed single-category view with hover-to-go-back ────────
+function ZoomedGroup({ layout, fill, width, height, maxCount, onHover, onLeave, onZoomOut }) {
+  const [hover, setHover] = React.useState(false);
+  const hFill = hover ? "#1456A0" : fill;
+  // When hovered, tint the meta text gold as a "click to go back" cue
+  const headerWithHover = { ...layout.header };
+  return (
+    <g onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      <rect x={0} y={0} width={width} height={height}
+            fill={hFill} rx={3} onClick={onZoomOut}
+            style={{ cursor:"pointer", transition:"fill .15s" }}/>
+      {layout.cells.map((c, i) => (
+        <Cell key={`z-${i}`} rect={c} datum={c.datum} maxCount={maxCount}
+              onHover={onHover} onLeave={onLeave}/>
+      ))}
+      <CategoryHeader
+        header={headerWithHover}
+        fill={fill}
+        isZoomed
+        hover={hover}
+        onClick={onZoomOut}
+        onEnter={() => setHover(true)}
+        onLeave={() => setHover(false)}
+        hoverAccent/>
+    </g>
+  );
+}
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+const { useState, useMemo, useRef, useEffect } = React;
+
+// Dynamic height: 60px per science field, min 600px.
+// As the taxonomy grows, the treemap expands downward.
+function App() {
+  const taxonomy = window.DWR_TAXONOMY;
+  const wrapRef  = useRef(null);
+  const [width,    setWidth]   = useState(900);
+  const [zoomCat,  setZoomCat] = useState(null);
+  const [tip,      setTip]     = useState(null);
+
+  // Track container width
+  useEffect(() => {
+    if (!wrapRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) setWidth(Math.floor(e.contentRect.width));
+    });
+    ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Esc exits zoom
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setZoomCat(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Re-post height whenever zoom state changes
+  useEffect(() => {
+    setTimeout(postHeight, 100);
+    setTimeout(postHeight, 400);
+  }, [zoomCat]);
+
+  // Fixed aspect ratio height — matches container width proportionally
+  // Zoomed view needs more height since it shows one category at full size
+  const height = zoomCat ? Math.round(width * 0.85) : Math.round(width * 0.65);
+
+  const allCounts  = taxonomy.flatMap((c) => c.subfields.map((s) => s.count));
+  const maxCount   = Math.max(...allCounts, 1);
+  const totalPart  = allCounts.reduce((s, n) => s + n, 0);
+  const totalGaps  = allCounts.filter((c) => c === 0).length;
+  const totalCats  = taxonomy.length;
+  const totalSubs  = allCounts.length;
+  const maxCatTotal = Math.max(...taxonomy.map((c) => c.subfields.reduce((s,f) => s+f.count, 0)), 1);
+
+  const layout = useMemo(() =>
+    layoutTreemap(taxonomy, width, height, { headerH:28, gap:3, inset:6 }),
+    [taxonomy, width, height]
+  );
+
+  const zoomedData = zoomCat ? taxonomy.find((c) => c.category === zoomCat) : null;
+  const zoomedLayout = useMemo(() =>
+    zoomedData ? layoutSingle(zoomedData, width, height, { headerH:44, gap:5, inset:10 }) : null,
+    [zoomedData, width, height]
+  );
+
+  const onHover = (e, datum) => {
+    const rect = wrapRef.current.getBoundingClientRect();
+    setTip({ x: e.clientX - rect.left, y: e.clientY - rect.top, datum });
+  };
+  const onLeave = () => setTip(null);
+
+  return (
+    <div>
+      {/* SVG treemap */}
+      <div className="tm-wrap" ref={wrapRef}>
+        <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height}
+             style={{ background:"white", borderRadius:4, display:"block" }}>
+          <HatchDef/>
+          <rect x={0} y={0} width={width} height={height} fill="white"/>
+
+          {!zoomCat && layout.map((cat, ci) => (
+            <CategoryGroup
+              key={`cat-${ci}`}
+              cat={cat}
+              fill={parentFill(cat.header.category, taxonomy, maxCatTotal)}
+              isZoomed={false}
+              onZoom={() => setZoomCat(cat.header.category)}
+              maxCount={maxCount}
+              onHover={onHover}
+              onLeave={onLeave}/>
+          ))}
+
+          {zoomedLayout && (
+            <ZoomedGroup
+              key={`zoom-${zoomCat}`}
+              layout={zoomedLayout}
+              fill={parentFill(zoomCat, taxonomy, maxCatTotal)}
+              width={width} height={height}
+              maxCount={maxCount}
+              onHover={onHover} onLeave={onLeave}
+              onZoomOut={() => setZoomCat(null)}/>
+          )}
+        </svg>
+
+        {/* Tooltip */}
+        {tip && (
+          <div className="tm-tooltip" style={{ left: tip.x+14, top: tip.y+14 }}>
+            <div className="cat">{tip.datum.category}</div>
+            <div className="name">{tip.datum.name}</div>
+            <div className="count">
+              <span className="lbl">Partnerships</span>
+              <span className={`val${tip.datum.count===0?" gap":""}`}>
+                {tip.datum.count === 0 ? "0 — coverage gap" : tip.datum.count}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+// Post initial height after React renders
+window.addEventListener("resize", postHeight);
+setTimeout(postHeight, 400);
+setTimeout(postHeight, 1200);
+{%- endraw %}
+</script>
+</body>
+</html>
