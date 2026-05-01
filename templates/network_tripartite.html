@@ -84,6 +84,71 @@
   .leg-summary:hover { background: #E8F0F7; }
   .leg-body { padding: 6px 12px 10px; font-size: 11px; line-height: 1.7; color: #444; }
   .leg-body p { margin-bottom: 4px; font-size: 10px; color: #555; }
+
+  /* ── POC search widget ── */
+  .leg-search-wrap {
+    padding: 8px 12px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+  .leg-search-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #003366;
+    margin-bottom: 5px;
+  }
+  .leg-search-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .leg-search-input {
+    flex: 1;
+    padding: 5px 8px;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    outline: none;
+    font-family: Arial, sans-serif;
+    color: #333;
+  }
+  .leg-search-input:focus { border-color: #0071BC; }
+  .leg-search-clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    color: #aaa;
+    padding: 2px 4px;
+    line-height: 1;
+  }
+  .leg-search-clear:hover { color: #333; }
+  .leg-search-results {
+    margin-top: 5px;
+  }
+  .poc-result-item {
+    padding: 4px 6px;
+    font-size: 11px;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #003366;
+    font-weight: 600;
+    transition: background 0.1s;
+  }
+  .poc-result-item:hover { background: #E8F0F7; }
+  .poc-result-item.active {
+    background: #003366;
+    color: white;
+    border-left: 3px solid #C8960C;
+  }
+  .poc-no-results {
+    font-size: 10px;
+    color: #aaa;
+    font-style: italic;
+    padding: 3px 0;
+  }
   .section-divider {
     border-top: 1px solid #eee; margin: 10px 0 8px; padding-top: 8px;
   }
@@ -139,13 +204,24 @@
 <div id="legend">
 
   <!-- ── Header (always visible) ── -->
-  <div open class="leg-header">
+  <div class="leg-header">
     <span class="leg-title">Organizational Network</span>
     <span class="leg-hint">Hover to highlight · Click to pin</span>
   </div>
 
+  <!-- ── POC Self-service Filter ── -->
+  <div class="leg-search-wrap">
+    <div class="leg-search-label">Find my partnerships</div>
+    <div class="leg-search-row">
+      <input type="text" id="poc-search" class="leg-search-input"
+             placeholder="Search staff name…" autocomplete="off">
+      <button id="poc-clear" class="leg-search-clear" title="Clear" style="display:none;">✕</button>
+    </div>
+    <div id="poc-results" class="leg-search-results"></div>
+  </div>
+
   <!-- ── How to use ── -->
-  <details open class="leg-section">
+  <details class="leg-section">
     <summary class="leg-summary">How to use</summary>
     <div class="leg-body">
       <p>Click any <strong>node</strong> to highlight its direct connections across all three columns.</p>
@@ -619,6 +695,138 @@ network.on("blurNode", function() {
     if (!activeNode && !activeEdge) restoreDefault();
 });
 
+// ── POC Self-service Filter ───────────────────────────────────────────────
+
+var pocInput   = document.getElementById("poc-search");
+var pocClear   = document.getElementById("poc-clear");
+var pocResults = document.getElementById("poc-results");
+var activePoc  = null;
+
+// Get all staff node IDs for search
+var staffNodeIds = nodesData
+    .filter(function(n) { return n.group === "staff"; })
+    .map(function(n) { return n.id; });
+
+function pocDisplayName(id) {
+    // "Smith, Jordan@DWR" → "Smith, Jordan"
+    return id.replace(/@.*$/, "").trim();
+}
+
+function highlightStaffNode(staffId) {
+    activePoc = staffId;
+    activeNode = staffId;
+    var neighbors = new Set(adjacency[staffId] || []);
+    neighbors.add(staffId);
+
+    visNodes.update(visNodes.get().map(function(n) {
+        var isHighlit = neighbors.has(n.id);
+        var orig = nodeMeta[n.id] ? nodeMeta[n.id].color : "#cccccc";
+        return {
+            id:          n.id,
+            label:       isHighlit ? n.id.replace(/@.*$/, "") : "",
+            color:       isHighlit
+                ? { background: orig, border: n.id === staffId ? "#C8960C" : orig }
+                : { background: DIM, border: DIM },
+            borderWidth: n.id === staffId ? 3 : 0,
+            opacity:     isHighlit ? 1 : 0.15,
+            size:        nodeSize(n.id),
+        };
+    }));
+
+    visEdges.update(visEdges.get().map(function(e) {
+        var connected = neighbors.has(e.from) && neighbors.has(e.to);
+        return { id: e.id, color: connected ? undefined : DIM, opacity: connected ? 1 : 0.1 };
+    }));
+
+    // Show summary panel
+    var panel = document.getElementById("summary-panel");
+    if (panel) {
+        var fieldNbrs = (adjacency[staffId] || []).filter(function(x) {
+            return nodeMeta[x] && nodeMeta[x].type === "field";
+        });
+        var divNbrs = (adjacency[staffId] || []).filter(function(x) {
+            return nodeMeta[x] && nodeMeta[x].type === "division";
+        });
+        var html = '<div class="s-title">' + pocDisplayName(staffId) + '</div>';
+        html += '<div class="s-type">DWR Point of Contact</div>';
+        html += '<div class="s-degree">' + fieldNbrs.length + ' science field' + (fieldNbrs.length !== 1 ? "s" : "") + ' · ' + divNbrs.length + ' division' + (divNbrs.length !== 1 ? "s" : "") + '</div>';
+        if (fieldNbrs.length) {
+            html += '<div class="s-section">Science Fields</div>';
+            fieldNbrs.forEach(function(f) {
+                var c = nodeMeta[f] ? nodeMeta[f].color : "#aaa";
+                html += '<div class="s-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + f + '</div>';
+            });
+        }
+        if (divNbrs.length) {
+            html += '<div class="s-section">Divisions / Offices / Branches</div>';
+            divNbrs.forEach(function(d) {
+                var c = nodeMeta[d] ? nodeMeta[d].color : "#FFB74D";
+                html += '<div class="s-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + d + '</div>';
+            });
+        }
+        panel.innerHTML = html;
+        panel.style.display = "block";
+    }
+}
+
+function clearPocFilter() {
+    activePoc = null;
+    activeNode = null;
+    pocInput.value = "";
+    pocClear.style.display = "none";
+    pocResults.innerHTML = "";
+    // Update active state in results
+    document.querySelectorAll(".poc-result-item").forEach(function(el) {
+        el.classList.remove("active");
+    });
+    restoreDefault();
+}
+
+function renderPocResults(query) {
+    pocResults.innerHTML = "";
+    if (!query) {
+        pocClear.style.display = "none";
+        return;
+    }
+    pocClear.style.display = "block";
+    var q = query.toLowerCase();
+    var matches = staffNodeIds.filter(function(id) {
+        return pocDisplayName(id).toLowerCase().includes(q);
+    });
+
+    if (matches.length === 0) {
+        pocResults.innerHTML = '<div class="poc-no-results">No staff found</div>';
+        return;
+    }
+
+    matches.slice(0, 8).forEach(function(id) {
+        var el = document.createElement("div");
+        el.className = "poc-result-item" + (id === activePoc ? " active" : "");
+        el.textContent = pocDisplayName(id);
+        el.addEventListener("click", function() {
+            // Toggle off if already active
+            if (activePoc === id) {
+                clearPocFilter();
+                return;
+            }
+            document.querySelectorAll(".poc-result-item").forEach(function(r) { r.classList.remove("active"); });
+            el.classList.add("active");
+            highlightStaffNode(id);
+        });
+        pocResults.appendChild(el);
+    });
+}
+
+pocInput.addEventListener("input", function() {
+    renderPocResults(pocInput.value.trim());
+});
+
+pocClear.addEventListener("click", function() {
+    clearPocFilter();
+});
+
+// ── Network click handler ─────────────────────────────────────────────────
+
 network.on("click", function(params) {
     // Edge click
     if (params.edges.length > 0 && params.nodes.length === 0) {
@@ -667,7 +875,11 @@ network.on("click", function(params) {
         if (activeNode === clicked) { activeNode = null; restoreDefault(); }
         else                        { activeNode = clicked; applyHighlight(clicked, true); }
     } else {
-        if (activeNode || activeEdge) { activeNode = null; activeEdge = null; restoreDefault(); }
+        if (activeNode || activeEdge || activePoc) {
+            activeNode = null; activeEdge = null;
+            if (activePoc) clearPocFilter();
+            else restoreDefault();
+        }
     }
 });
 
