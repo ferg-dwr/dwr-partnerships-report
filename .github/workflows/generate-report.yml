@@ -5,7 +5,9 @@ on:
     branches:
       - main                  # Only publish reports from main
     paths:
-      - "data/latest.csv"     # Only runs when a new CSV is uploaded
+      - "data/latest.csv"     # New CSV upload
+      - "templates/**"        # Network/report template changes
+      - "dwr_report/**"       # Pipeline or chart code changes
 
 permissions:
   pages: write
