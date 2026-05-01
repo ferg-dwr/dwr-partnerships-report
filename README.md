@@ -51,8 +51,8 @@ The workflow triggers on changes to `data/latest.csv`, `templates/**`, or `dwr_r
 ### Science Field Coverage (treemap)
 - Custom SVG treemap — no external charting library
 - Blue hues from 1 → N partnerships; grey hatched cells = coverage gaps
-- Grows vertically as the taxonomy expands — no horizontal squishing
-- Click a category header to zoom in; click again to zoom out
+- Click a category header to zoom in; hover to see back affordance (gold cue)
+- Stats bar always visible: total partnerships, science areas, subfields covered, gaps
 
 ### Organizational Network: Science ↔ Staff ↔ Division (tripartite)
 - **POC self-service filter** — search your name to highlight all your partnerships
@@ -167,7 +167,7 @@ cd reports && python -m http.server 8000
 
 ### Expanding the taxonomy
 
-Edit `data/dwr_custom_taxonomy.csv` to add new science categories or fields. The treemap grows vertically to accommodate new entries — no layout code changes needed.
+Edit `data/dwr_custom_taxonomy.csv` to add new science categories or fields. The treemap layout recalculates automatically — no code changes needed.
 
 ---
 
@@ -199,7 +199,3 @@ Labels (`data-update`, `new-partnerships`, `updated-partnerships`, `needs-review
 - **`main`** — production; pushes here trigger report generation and Pages deployment
 
 ---
-
-## First-time setup
-
-See **[SETUP.md](SETUP.md)** for step-by-step instructions on creating the repo, configuring the GitHub PAT secret, enabling Pages, and seeding the initial CSV.
