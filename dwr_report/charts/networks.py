@@ -86,7 +86,7 @@ def _load_template(template_path: Path) -> Any:
 def network_tripartite(
     data: PartnershipData,
     template_path: str | Path = "templates/network_tripartite.html",
-    title: str = "Organizational Network: Science, Staff, and Structure",
+    title: str = "Science Field <-> Staff <-> Division Network",
 ) -> str:
     """
     Generate an interactive tripartite network graph.
@@ -303,7 +303,7 @@ def network_tripartite(
 def network_bipartite(
     data: PartnershipData,
     template_path: str | Path = "templates/network_bipartite.html",
-    title: str = "Organizational Network: DWR and Its Partners",
+    title: str = "DWR Division <-> Partner Organization Network",
 ) -> str:
     """
     Generate an interactive bipartite network graph:
@@ -535,9 +535,9 @@ def network_bipartite(
             top_orgs_json=top_orgs,
             top_divisions_json=top_divisions,
             partnership_details_json=partnership_details,
-            org_type_counts_json=json.dumps(
-                {ot: int((df[org_type_col] == ot).sum()) for ot in org_types_present}
-            ),
+            org_type_counts_json={
+                ot: int((df[org_type_col] == ot).sum()) for ot in org_types_present
+            },
         )
     )
 

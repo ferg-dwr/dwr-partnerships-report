@@ -139,13 +139,13 @@
 <div id="legend">
 
   <!-- ── Header (always visible) ── -->
-  <div class="leg-header">
+  <div open class="leg-header">
     <span class="leg-title">Organizational Network</span>
     <span class="leg-hint">Hover to highlight · Click to pin</span>
   </div>
 
   <!-- ── How to use ── -->
-  <details class="leg-section">
+  <details open class="leg-section">
     <summary class="leg-summary">How to use</summary>
     <div class="leg-body">
       <p>Click any <strong>node</strong> to highlight its direct connections across all three columns.</p>
@@ -431,59 +431,35 @@ function sparkRow(id, color, deg, maxDeg) {
 }
 
 function buildSparkSections() {
-    // Top 5 Science Fields
-    var topF  = fieldNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
-    var maxF  = nodeDegree[topF[0].id] || 1;
-    var fHtml = '<div class="section-title">Top 5 Science Fields</div>';
-    topF.forEach(function(n) { fHtml += sparkRow(n.id, nodeMeta[n.id].color, nodeDegree[n.id]||0, maxF); });
-    document.getElementById("spark-fields").innerHTML = fHtml;
-
-    // Populate accordion: Top 5 Science Fields
+    // Top 5 Science Fields → accordion
+    var topF = fieldNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
     var accFields = document.getElementById("tri-top-fields");
-    if (accFields) {
+    if (accFields && topF.length) {
         accFields.innerHTML = "";
         topF.forEach(function(n) {
             var row = document.createElement("div");
             row.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;";
-            var pct = maxF > 0 ? Math.round((nodeDegree[n.id]||0) / maxF * 100) : 0;
             row.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + nodeMeta[n.id].color + ';flex-shrink:0;display:inline-block;"></span>' +
                             '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + n.id + '">' + n.id + '</span>' +
-                            '<span style="color:#888;font-weight:600;">' + (nodeDegree[n.id]||0) + '</span>';
+                            '<span style="color:#888;font-weight:600;margin-left:4px;">' + (nodeDegree[n.id]||0) + '</span>';
             accFields.appendChild(row);
         });
     }
 
-    // Top 5 Divisions
-    var topD  = divisionNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
-    var maxD  = nodeDegree[topD[0].id] || 1;
-    var dHtml = '<div class="section-title">Top 5 Divisions</div>';
-    topD.forEach(function(n) { dHtml += sparkRow(n.id, "#FFB74D", nodeDegree[n.id]||0, maxD); });
-    document.getElementById("spark-divisions").innerHTML = dHtml;
-
-    // Top 5 Staff by science / by division
-    var topSS  = staffNodes.slice().sort(function(a,b) { return (staffScienceDeg[b.id]||0)-(staffScienceDeg[a.id]||0); }).slice(0,5);
-    var maxSS  = staffScienceDeg[topSS[0].id] || 1;
-
-    // Populate accordion: Top 5 Staff
+    // Top 5 Staff → accordion
+    var topSS = staffNodes.slice().sort(function(a,b) { return (staffScienceDeg[b.id]||0)-(staffScienceDeg[a.id]||0); }).slice(0,5);
     var accStaff = document.getElementById("top-staff-list");
-    if (accStaff) {
+    if (accStaff && topSS.length) {
         accStaff.innerHTML = "";
         topSS.forEach(function(n) {
             var row = document.createElement("div");
             row.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;";
             row.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#81C784;flex-shrink:0;display:inline-block;"></span>' +
                             '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + n.id + '">' + n.id + '</span>' +
-                            '<span style="color:#888;font-weight:600;">' + (staffScienceDeg[n.id]||0) + '</span>';
+                            '<span style="color:#888;font-weight:600;margin-left:4px;">' + (staffScienceDeg[n.id]||0) + '</span>';
             accStaff.appendChild(row);
         });
     }
-    var topSD  = staffNodes.slice().sort(function(a,b) { return (staffDivisionDeg[b.id]||0)-(staffDivisionDeg[a.id]||0); }).slice(0,5);
-    var maxSD  = staffDivisionDeg[topSD[0].id] || 1;
-    var sHtml  = '<div class="section-title">Top 5 Staff — by Science Fields</div>';
-    topSS.forEach(function(n) { sHtml += sparkRow(n.id, "#81C784", staffScienceDeg[n.id]||0, maxSS); });
-    sHtml += '<div style="margin-top:10px;" class="section-title">Top 5 Staff — by Divisions</div>';
-    topSD.forEach(function(n) { sHtml += sparkRow(n.id, "#81C784", staffDivisionDeg[n.id]||0, maxSD); });
-    document.getElementById("spark-staff").innerHTML = sHtml;
 }
 
 // ── Summary panel helpers ─────────────────────────────────────────────────

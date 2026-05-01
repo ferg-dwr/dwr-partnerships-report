@@ -221,7 +221,7 @@
   </div>
 
   <!-- ── How to use ── -->
-  <details class="leg-section">
+  <details class="leg-section" open>
     <summary class="leg-summary">How to use</summary>
     <div class="leg-body">
       <p>Click any <strong>node</strong> to see its connected partners and partnership details.</p>
@@ -266,39 +266,21 @@
   </details>
 
   <!-- ── Top 5 Divisions ── -->
-  <details class="leg-section">
+  <details class="leg-section" id="leg-top-divisions">
     <summary class="leg-summary">Top 5 Divisions</summary>
     <div class="leg-body">
-      <div style="font-size:9px;color:#aaa;display:flex;justify-content:space-between;margin-bottom:4px;">
-        <span>Division</span><span>Partnerships</span>
-      </div>
-      {% for div in top_divisions %}
-      <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;">
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ div.name }}">{{ div.name }}</span>
-        <span style="color:#FFB74D;font-weight:600;margin-left:6px;">{{ div.connections }} 🤝</span>
-      </div>
-      {% endfor %}
+      <!-- populated by JS buildSparkSections -->
     </div>
   </details>
 
   <!-- ── Top 5 Organizations ── -->
-  <details class="leg-section">
+  <details class="leg-section" id="leg-top-orgs">
     <summary class="leg-summary">Top 5 Organizations</summary>
     <div class="leg-body">
-      <div style="font-size:9px;color:#aaa;display:flex;justify-content:space-between;margin-bottom:4px;">
-        <span>Organization</span><span>Partnerships</span>
-      </div>
-      {% for org in top_orgs %}
-      <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;">
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ org.name }}">{{ org.name }}</span>
-        <span style="color:#6BAED6;font-weight:600;margin-left:6px;">{{ org.connections }} 🤝</span>
-      </div>
-      {% endfor %}
+      <!-- populated by JS buildSparkSections -->
     </div>
   </details>
 
-  <div id="spark-divisions" class="section-divider"></div>
-  <div id="spark-orgs"      class="section-divider"></div>
 </div>
 
 <div id="summary-panel"></div>
@@ -436,21 +418,21 @@ network.on("stabilizationIterationsDone", function() {
     network.setOptions({ physics: { enabled: false } });
     layoutReady = true;
 
-    // Inject org type counts into legend
+    // Inject org type counts into Partner Types accordion section
     var legBody = document.getElementById("org-type-legend-body");
-    document.querySelectorAll(".org-type-label").forEach(function(el) {
-        var ot    = el.dataset.orgType;
-        var count = orgTypeCounts[ot] || 0;
-        var color = orgTypeColorsData[ot] || "#aaa";
-        if (count > 0 && legBody) {
+    if (legBody) {
+        Object.keys(orgTypeColorsData).forEach(function(ot) {
+            var count = orgTypeCounts[ot] || 0;
+            if (count === 0) return;
+            var color = orgTypeColorsData[ot] || "#aaa";
             var item = document.createElement("div");
             item.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;";
             item.innerHTML = '<span style="width:9px;height:9px;border-radius:2px;background:' + color + ';flex-shrink:0;display:inline-block;"></span>' +
                              '<span style="flex:1;">' + ot + '</span>' +
                              '<span style="color:#888;font-weight:600;">' + count + '</span>';
             legBody.appendChild(item);
-        }
-    });
+        });
+    }
 
     document.getElementById("loading-overlay").style.display = "none";
     document.getElementById("legend").style.display = "block";
@@ -543,17 +525,35 @@ function sparkRow(id, color, isSquare, deg, maxDeg) {
 }
 
 function buildSparkSections() {
+    // Top 5 Divisions → accordion body
     var topDivs = divNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
-    var maxD    = nodeDegree[topDivs[0].id] || 1;
-    var dHtml   = '<div class="section-title">Top 5 Divisions</div>';
-    topDivs.forEach(function(n) { dHtml += sparkRow(n.id, nodeMeta[n.id].color, false, nodeDegree[n.id]||0, maxD); });
-    document.getElementById("spark-divisions").innerHTML = dHtml;
+    var accDivs = document.querySelector("#leg-top-divisions .leg-body");
+    if (accDivs && topDivs.length) {
+        accDivs.innerHTML = '<div style="font-size:9px;color:#aaa;display:flex;justify-content:space-between;margin-bottom:4px;"><span>Division</span><span>Partnerships</span></div>';
+        topDivs.forEach(function(n) {
+            var row = document.createElement("div");
+            row.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;";
+            row.innerHTML = '<span style="width:9px;height:9px;border-radius:50%;background:' + nodeMeta[n.id].color + ';flex-shrink:0;display:inline-block;"></span>' +
+                            '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + n.id + '">' + n.id + '</span>' +
+                            '<span style="color:#FFB74D;font-weight:600;margin-left:6px;">' + (nodeDegree[n.id]||0) + '</span>';
+            accDivs.appendChild(row);
+        });
+    }
 
+    // Top 5 Organizations → accordion body
     var topOrgs = orgNodes.slice().sort(function(a,b) { return (nodeDegree[b.id]||0)-(nodeDegree[a.id]||0); }).slice(0,5);
-    var maxO    = nodeDegree[topOrgs[0].id] || 1;
-    var oHtml   = '<div class="section-title">Top 5 Organizations</div>';
-    topOrgs.forEach(function(n) { oHtml += sparkRow(n.id, nodeMeta[n.id].color, true, nodeDegree[n.id]||0, maxO); });
-    document.getElementById("spark-orgs").innerHTML = oHtml;
+    var accOrgs = document.querySelector("#leg-top-orgs .leg-body");
+    if (accOrgs && topOrgs.length) {
+        accOrgs.innerHTML = '<div style="font-size:9px;color:#aaa;display:flex;justify-content:space-between;margin-bottom:4px;"><span>Organization</span><span>Partnerships</span></div>';
+        topOrgs.forEach(function(n) {
+            var row = document.createElement("div");
+            row.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 0;border-bottom:1px solid #f0f0f0;font-size:11px;";
+            row.innerHTML = '<span style="width:9px;height:9px;border-radius:2px;background:' + nodeMeta[n.id].color + ';flex-shrink:0;display:inline-block;"></span>' +
+                            '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + n.id + '">' + n.id + '</span>' +
+                            '<span style="color:#6BAED6;font-weight:600;margin-left:6px;">' + (nodeDegree[n.id]||0) + '</span>';
+            accOrgs.appendChild(row);
+        });
+    }
 }
 
 // ── Summary panel ──────────────────────────────────────────────────────────
