@@ -713,60 +713,10 @@ function pocDisplayName(id) {
 }
 
 function highlightStaffNode(staffId) {
-    activePoc = staffId;
+    // Delegate entirely to applyHighlight so behaviour is identical to clicking the node
+    activePoc  = staffId;
     activeNode = staffId;
-    var neighbors = new Set(adjacency[staffId] || []);
-    neighbors.add(staffId);
-
-    visNodes.update(visNodes.get().map(function(n) {
-        var isHighlit = neighbors.has(n.id);
-        var orig = nodeMeta[n.id] ? nodeMeta[n.id].color : "#cccccc";
-        return {
-            id:          n.id,
-            label:       isHighlit ? n.id.replace(/@.*$/, "") : "",
-            color:       isHighlit
-                ? { background: orig, border: n.id === staffId ? "#C8960C" : orig }
-                : { background: DIM, border: DIM },
-            borderWidth: n.id === staffId ? 3 : 0,
-            opacity:     isHighlit ? 1 : 0.15,
-            size:        nodeSize(n.id),
-        };
-    }));
-
-    visEdges.update(visEdges.get().map(function(e) {
-        var connected = neighbors.has(e.from) && neighbors.has(e.to);
-        return { id: e.id, color: connected ? undefined : DIM, opacity: connected ? 1 : 0.1 };
-    }));
-
-    // Show summary panel
-    var panel = document.getElementById("summary-panel");
-    if (panel) {
-        var fieldNbrs = (adjacency[staffId] || []).filter(function(x) {
-            return nodeMeta[x] && nodeMeta[x].type === "field";
-        });
-        var divNbrs = (adjacency[staffId] || []).filter(function(x) {
-            return nodeMeta[x] && nodeMeta[x].type === "division";
-        });
-        var html = '<div class="s-title">' + pocDisplayName(staffId) + '</div>';
-        html += '<div class="s-type">DWR Point of Contact</div>';
-        html += '<div class="s-degree">' + fieldNbrs.length + ' science field' + (fieldNbrs.length !== 1 ? "s" : "") + ' · ' + divNbrs.length + ' division' + (divNbrs.length !== 1 ? "s" : "") + '</div>';
-        if (fieldNbrs.length) {
-            html += '<div class="s-section">Science Fields</div>';
-            fieldNbrs.forEach(function(f) {
-                var c = nodeMeta[f] ? nodeMeta[f].color : "#aaa";
-                html += '<div class="s-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + f + '</div>';
-            });
-        }
-        if (divNbrs.length) {
-            html += '<div class="s-section">Divisions / Offices / Branches</div>';
-            divNbrs.forEach(function(d) {
-                var c = nodeMeta[d] ? nodeMeta[d].color : "#FFB74D";
-                html += '<div class="s-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + d + '</div>';
-            });
-        }
-        panel.innerHTML = html;
-        panel.style.display = "block";
-    }
+    applyHighlight(staffId, true);   // pinned = true so panel stays open
 }
 
 function clearPocFilter() {
@@ -872,8 +822,18 @@ network.on("click", function(params) {
     if (params.nodes.length > 0) {
         var clicked = params.nodes[0];
         activeEdge = null;
-        if (activeNode === clicked) { activeNode = null; restoreDefault(); }
-        else                        { activeNode = clicked; applyHighlight(clicked, true); }
+        if (activeNode === clicked) {
+            // Toggle off — if POC filter was active, clear it too
+            activeNode = null;
+            if (activePoc) clearPocFilter();
+            else restoreDefault();
+        } else {
+            // New node — clear any POC filter state and highlight normally
+            activePoc = null;
+            pocClear.style.display = "none";
+            activeNode = clicked;
+            applyHighlight(clicked, true);
+        }
     } else {
         if (activeNode || activeEdge || activePoc) {
             activeNode = null; activeEdge = null;
