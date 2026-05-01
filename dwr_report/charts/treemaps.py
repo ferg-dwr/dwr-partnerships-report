@@ -137,10 +137,26 @@ def treemap_coverage(
         range_color=(-0.01, 1.0),
     )
 
+    # Build explicit color list — parent category rows get light blue header color
+    categories = taxonomy["1st Level (Science Category)"].unique().tolist()
+    explicit_colors = (
+        ["#C8E6FA"] * len(categories)  # parent rows: light DWR blue
+        + taxonomy["ColorValue"].tolist()  # child rows: existing scale
+    )
+
     fig.update_traces(
         hovertemplate="<b>%{label}</b><br>Partnerships: %{customdata[0]}<extra></extra>",
         customdata=np.stack([taxonomy["Count"]], axis=-1),
         textinfo="label",
+        marker=dict(
+            line=dict(width=2, color="white"),
+            pad=dict(t=22, l=4, r=4, b=4),
+            colors=explicit_colors,
+            colorscale=color_scale,
+            cmin=-0.01,
+            cmax=1.0,
+            showscale=False,
+        ),
     )
 
     fig.update_layout(
@@ -149,6 +165,8 @@ def treemap_coverage(
         margin=dict(t=10, l=20, r=20, b=20),
         coloraxis_showscale=False,
         title_font_size=20,
+        paper_bgcolor="white",
+        plot_bgcolor="white",
     )
 
     return fig
