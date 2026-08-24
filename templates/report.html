@@ -110,7 +110,7 @@
       color: white;
       border-bottom: 3px solid var(--gold);
     }
-    .header-nav .nav-upload {
+    .header-nav .nav-upload, .header-nav .nav-export {
       background: rgba(200,150,12,0.85);
       color: rgba(255,255,255,0.9);
       border-right: none;
@@ -119,7 +119,7 @@
       letter-spacing: 0.05em;
       font-size: 0.78rem;
     }
-    .header-nav .nav-upload:hover {
+    .header-nav .nav-upload:hover, .header-nav .nav-export:hover {
       background: rgba(242,190,42,0.9);
       color: white;
     }
@@ -251,51 +251,90 @@
 <body>
   <header>
     <div class="header-inner">
-      <div class="header-org">California Department of Water Resources</div>
-      <h1>Internal Partnerships Report</h1>
+      <div class="header-org">{{ content.REPORT_ORG|e }}</div>
+      <h1>{{ (content.REPORT_TITLE if profile == "external" else "Internal Partnerships Report")|e }}</h1>
       <div class="header-meta">
         <span class="generated-at">Last updated {{ generated_at }}</span>
       </div>
     </div>
     <div class="header-nav-wrap">
       <nav class="header-nav" id="header-nav">
+        {% if profile == "external" %}<a href="#intro">Overview</a>{% endif %}
+        {% if profile == "external" %}<a href="#summary">Summary</a>{% endif %}
         <a href="#treemap-coverage">Science Coverage Gaps</a>
-        <a href="#network-tripartite">Organizational Network</a>
-        <a href="#network-bipartite">Division &amp; Partner Network</a>
-        <a href="upload-ui/" class="nav-upload">⬆ Upload Data</a>
+        {% if profile != "external" %}<a href="#network-tripartite">Organizational Network</a>{% endif %}
+        {% if profile != "external" %}<a href="#network-bipartite">Division &amp; Partner Network</a>{% endif %}
+        {% if profile != "external" %}<a href="upload-ui/" class="nav-upload">⬆ Upload Data</a>{% endif %}
+        {% if profile == "external" and pdf_available %}<a href="report.pdf" class="nav-export" download>⬇ Export Report</a>{% endif %}
       </nav>
     </div>
   </header>
 
   <!-- Floating TOC — shown when header nav scrolls out of view -->
   <nav id="floating-toc">
-    <a href="#treemap-coverage"   class="toc-item">Science Gaps</a>
-    <a href="#network-tripartite" class="toc-item">Science Network</a>
-    <a href="#network-bipartite"  class="toc-item">Partner Network</a>
+    {% if profile == "external" %}<a href="#intro"             class="toc-item">Overview</a>{% endif %}
+    {% if profile == "external" %}<a href="#summary"          class="toc-item">Summary</a>{% endif %}
+    <a href="#treemap-coverage"   class="toc-item">Science Coverage Gaps</a>
+    {% if profile != "external" %}<a href="#network-tripartite" class="toc-item">Science Network</a>{% endif %}
+    {% if profile != "external" %}<a href="#network-bipartite"  class="toc-item">Partner Network</a>{% endif %}
   </nav>
 
   <div class="main-content">
 
-  {{ diff_banner }}
+  {% if profile == "external" %}
+  <section class="chart-section" id="intro">
+    <h2>{{ content.INTRO_HEADING|e }}</h2>
+    {% for para in content.INTRO_PARAGRAPHS %}
+    <p class="chart-context">{{ para|e }}</p>
+    {% endfor %}
+    <p class="chart-context">
+      {{ content.CONTACT_PREFIX|e }}
+      <a href="mailto:{{ content.CONTACT_EMAIL }}">{{ content.CONTACT_EMAIL|e }}</a>.
+    </p>
+  </section>
+  {% endif %}
+
+  {% if profile != "external" %}{{ diff_banner }}{% endif %}
+
+  {% if profile == "external" %}
+  <div class="chart-section" id="summary">
+    <h2>Partnerships at a Glance</h2>
+    {{ summary_dashboard }}
+    <p class="chart-context" style="margin-top:1rem;">{{ content.INVESTMENT_NOTE|e }}</p>
+    <p class="chart-context" style="margin-top:0.4rem;font-size:0.85rem;color:#777;">
+      * {{ content.FINANCIAL_DISCLAIMER|e }}
+    </p>
+  </div>
+  {% endif %}
 
   <div class="chart-section" id="treemap-coverage">
-    <h2>Science Field Coverage</h2>
+    <h2>{{ content.TREEMAP_TITLE|e }}</h2>
 
     <!-- Summary bar — always visible above the treemap iframe -->
     <div id="treemap-summary" style="margin-bottom:1rem;">
-      <p class="chart-context" style="margin-bottom:0.9rem;">
-        Each rectangle is a science subfield. Color and area both encode the number of
-        active DWR partnerships. Subfields with no current partnerships are flagged as
-        <strong>coverage gaps</strong>.
+      <p class="chart-context" style="margin-bottom:0.6rem;">
+        {{ content.TREEMAP_DESCRIPTION|e }}
+        <a href="{{ content.TAXONOMY_URL }}" target="_blank" rel="noopener">{{ content.TAXONOMY_LINK_TEXT|e }} &#8599;</a>
       </p>
+      <p class="chart-context" style="margin-bottom:0.9rem;">
+        <strong>Note on counting:</strong> {{ content.TREEMAP_COUNTING_NOTE|e }}
+      </p>
+      <details class="chart-context" style="margin-bottom:0.9rem;">
+        <summary style="cursor:pointer;font-weight:600;">How to read this figure</summary>
+        <ul style="margin:0.5rem 0 0 1.1rem;padding:0;">
+          {% for item in content.TREEMAP_HOW_TO_READ %}
+          <li style="margin-bottom:0.3rem;">{{ item|e }}</li>
+          {% endfor %}
+        </ul>
+      </details>
       <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:0.9rem;">
         <div id="tm-stat-partnerships" class="tm-stat-cell" style="border-right:1px solid var(--border);">
           <div class="tm-stat-num" style="color:var(--blue-dark);">—</div>
-          <div class="tm-stat-lbl">Partnerships</div>
+          <div class="tm-stat-lbl">{{ content.TERM_FIELD_TAGS|e }}</div>
         </div>
         <div id="tm-stat-fields" class="tm-stat-cell" style="border-right:1px solid var(--border);">
           <div class="tm-stat-num" style="color:var(--blue-dark);">—</div>
-          <div class="tm-stat-lbl">Science Areas</div>
+          <div class="tm-stat-lbl">Science Areas Covered</div>
         </div>
         <div id="tm-stat-covered" class="tm-stat-cell" style="border-right:1px solid var(--border);">
           <div class="tm-stat-num" style="color:var(--blue-dark);">—</div>
@@ -308,7 +347,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-size:11px;color:#666;margin-bottom:0.5rem;">
         <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#888;">Partnerships</span>
+          <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#888;">{{ content.TERM_INITIATIVES|e }}</span>
           <div style="width:160px;height:10px;border-radius:2px;background:linear-gradient(90deg,#EAF2FA 0%,#B8D3EC 25%,#6AA5D2 50%,#2F6FB0 75%,#0B3D75 100%);border:1px solid rgba(11,31,51,.1);"></div>
           <span id="tm-max-count" style="font-size:10px;color:#888;">—</span>
         </div>
@@ -316,7 +355,7 @@
           <span style="display:inline-block;width:16px;height:10px;background:#E5E5E2;border-radius:2px;
                 background-image:repeating-linear-gradient(45deg,transparent 0 4px,#D2D2CE 4px 5px);
                 border:1px solid rgba(11,31,51,.1);vertical-align:middle;"></span>
-          <span>Coverage gap <span style="color:#aaa;">(0 partnerships)</span></span>
+          <span>Coverage gap <span style="color:#aaa;">(0 {{ content.TERM_INITIATIVES_LOWER|e }})</span></span>
         </div>
       </div>
     </div>
@@ -324,37 +363,43 @@
     {{ iframe_treemap }}
   </div>
 
+  {% if profile != "external" %}
   <div class="chart-section" id="network-tripartite">
     <h2>Organizational Network: Science, Staff, and Structure</h2>
     <p class="chart-context">
-      Use this network to explore how DWR staff connect science and technology fields
-      to divisions, offices, and branches. Each node represents a science field (left),
-      a DWR point of contact (center), or a division/office/branch (right). An edge
-      indicates that a staff member is the point of contact for a partnership in that
-      science field. <strong>Click any node</strong> to highlight its connections.
-      Note: this figure reflects only partnerships where a staff member is listed as
-      the primary point of contact — it does not capture all staff engagement.
+      Use this network to see how DWR staff connect <strong>science and technology
+      fields</strong> to <strong>divisions, offices, and branches</strong>. Each node
+      is a science field (left), a <strong>DWR point of contact</strong> (center), or a
+      division, office, or branch (right). A line between two nodes means that staff
+      member is the point of contact for a partnership in that field.
+      <strong>Click any node</strong> to highlight its connections.
+      <strong>Note:</strong> this includes only partnerships where someone is listed as
+      the main point of contact, so it does not capture every way staff are involved.
     </p>
     {{ iframe_tripartite }}
   </div>
+  {% endif %}
 
+  {% if profile != "external" %}
   <div class="chart-section" id="network-bipartite">
     <h2>Organizational Network: DWR and Partner Organizations</h2>
     <p class="chart-context">
-      Use this network to explore how DWR divisions, offices, and branches connect
-      to external partner organizations. Node size reflects the total number of
-      partnerships — larger nodes are more connected. Edge width represents the
-      number of partnerships between a division and an organization.
-      <strong>Click any node</strong> to highlight its connections and see a summary.
+      Use this network to see how DWR <strong>divisions, offices, and branches</strong>
+      connect to <strong>external partner organizations</strong>. A node's size reflects
+      how many partnerships it has, and a line's thickness shows how many partnerships
+      link a division and an organization. <strong>Click any node</strong> to highlight
+      its connections and see a summary. <strong>Note:</strong> this reflects the number
+      of partnerships, not their size, funding, or how active each one is.
     </p>
     {{ iframe_bipartite }}
   </div>
+  {% endif %}
 
   </div>
 
   <script>
     var tocItems    = document.querySelectorAll('.toc-item');
-    var headerLinks = document.querySelectorAll('.header-nav a:not(.nav-upload)');
+    var headerLinks = document.querySelectorAll('.header-nav a:not(.nav-upload):not(.nav-export)');
     var floatingToc = document.getElementById('floating-toc');
     var headerNav   = document.getElementById('header-nav');
     var sections    = ['treemap-coverage', 'network-tripartite', 'network-bipartite']
@@ -382,35 +427,26 @@
       });
     }
 
-    // ── Auto-resize treemap iframe to its content height ──
+    // ── Treemap iframe messages: auto-resize height + populate summary stats ──
+    function setTmStat(id, val) {
+      var el = document.getElementById(id);
+      if (el) { var n = el.querySelector('.tm-stat-num'); if (n) n.textContent = val; }
+    }
     window.addEventListener("message", function(e) {
-      if (e.data && e.data.type === "tm-height") {
+      if (!e.data) return;
+      if (e.data.type === "tm-height") {
         var iframe = document.getElementById("treemap-iframe");
         if (iframe) iframe.style.height = e.data.height + "px";
+      } else if (e.data.type === "tm-stats") {
+        var d = e.data;
+        setTmStat('tm-stat-partnerships', d.totalPart);
+        setTmStat('tm-stat-fields', (d.coveredCats != null ? d.coveredCats : d.totalCats) + '/' + d.totalCats);
+        setTmStat('tm-stat-covered', (d.totalSubs - d.totalGaps) + '/' + d.totalSubs);
+        setTmStat('tm-stat-gaps', d.totalGaps);
+        var mc = document.getElementById('tm-max-count');
+        if (mc) mc.textContent = d.maxCount;
       }
     });
-
-    // ── Populate treemap summary from iframe data ──
-    var tmFrame = document.querySelector('#treemap-coverage iframe');
-    if (tmFrame) {
-      tmFrame.addEventListener('load', function() {
-        try {
-          var tax = tmFrame.contentWindow.DWR_TAXONOMY;
-          if (!tax) return;
-          var allCounts  = tax.flatMap(function(c) { return c.subfields.map(function(s) { return s.count; }); });
-          var totalPart  = allCounts.reduce(function(s,n) { return s+n; }, 0);
-          var totalGaps  = allCounts.filter(function(c) { return c===0; }).length;
-          var totalSubs  = allCounts.length;
-          var totalCats  = tax.length;
-          var maxCount   = Math.max.apply(null, allCounts);
-          document.getElementById('tm-stat-partnerships').querySelector('.tm-stat-num').textContent = totalPart;
-          document.getElementById('tm-stat-fields').querySelector('.tm-stat-num').textContent = totalCats;
-          document.getElementById('tm-stat-covered').querySelector('.tm-stat-num').textContent = (totalSubs-totalGaps) + '/' + totalSubs;
-          document.getElementById('tm-stat-gaps').querySelector('.tm-stat-num').textContent = totalGaps;
-          document.getElementById('tm-max-count').textContent = maxCount;
-        } catch(e) {}
-      });
-    }
 
     window.addEventListener('scroll', updateNav, { passive: true });
     updateNav();
