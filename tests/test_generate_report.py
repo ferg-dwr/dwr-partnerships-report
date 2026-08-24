@@ -92,14 +92,21 @@ class TestDiffBanner:
 
     def test_shows_new_count(self, tmp_path):
         p = write_diff(
-            tmp_path, {"new_ids": [1, 2, 3], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {
+                "new_ids": [1, 2, 3],
+                "removed_ids": [],
+                "changed_rows": [],
+                "warnings": [],
+            },
         )
         result = _diff_banner(p)
         assert "+3 new" in result
 
     def test_shows_removed_count(self, tmp_path):
         p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [5], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {"new_ids": [], "removed_ids": [5], "changed_rows": [], "warnings": []},
         )
         result = _diff_banner(p)
         assert "-1 removed" in result
@@ -115,7 +122,11 @@ class TestDiffBanner:
                     {
                         "id": 1,
                         "changes": [
-                            {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
+                            {
+                                "field": "Status of Partnership",
+                                "old": "Active",
+                                "new": "Inactive",
+                            }
                         ],
                     }
                 ],
@@ -162,7 +173,11 @@ class TestDiffBanner:
                     {
                         "id": 42,
                         "changes": [
-                            {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
+                            {
+                                "field": "Status of Partnership",
+                                "old": "Active",
+                                "new": "Inactive",
+                            }
                         ],
                     }
                 ],
@@ -174,7 +189,8 @@ class TestDiffBanner:
 
     def test_zero_counts_shown(self, tmp_path):
         p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []},
         )
         result = _diff_banner(p)
         assert "+0 new" in result
@@ -183,7 +199,8 @@ class TestDiffBanner:
 
     def test_returns_html_string(self, tmp_path):
         p = write_diff(
-            tmp_path, {"new_ids": [1], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {"new_ids": [1], "removed_ids": [], "changed_rows": [], "warnings": []},
         )
         result = _diff_banner(p)
         assert isinstance(result, str)
@@ -332,7 +349,8 @@ class TestGenerate:
     def test_creates_index_html(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
         diff_p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []},
         )
         out_p = tmp_path / "reports" / "index.html"
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
@@ -353,7 +371,8 @@ class TestGenerate:
     def test_output_is_valid_html(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
         diff_p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []},
         )
         out_p = tmp_path / "reports" / "index.html"
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
@@ -376,7 +395,8 @@ class TestGenerate:
     def test_creates_parent_directories(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
         diff_p = write_diff(
-            tmp_path, {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {"new_ids": [], "removed_ids": [], "changed_rows": [], "warnings": []},
         )
         out_p = tmp_path / "deep" / "nested" / "reports" / "index.html"
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
@@ -400,7 +420,13 @@ class TestGenerate:
     def test_diff_banner_reflected_in_output(self, tmp_path):
         csv_p = write_csv(tmp_path, "data.csv", [BASE_ROW])
         diff_p = write_diff(
-            tmp_path, {"new_ids": [99, 100], "removed_ids": [], "changed_rows": [], "warnings": []}
+            tmp_path,
+            {
+                "new_ids": [99, 100],
+                "removed_ids": [],
+                "changed_rows": [],
+                "warnings": [],
+            },
         )
         out_p = tmp_path / "reports" / "index.html"
         tri_t = make_minimal_template(tmp_path, "network_tripartite.html")
@@ -408,5 +434,9 @@ class TestGenerate:
 
         generate(csv_p, diff_p, out_p, tripartite_template=tri_t, bipartite_template=bi_t)
 
-        content = out_p.read_text()
-        assert "+2 new" in content
+        # The diff banner is internal-only: report.html gates it behind
+        # `{% if profile != "external" %}`. Assert both halves of that contract so
+        # the test documents the decision instead of just checking one side.
+        internal_p = out_p.parent / "internal_report.html"
+        assert "+2 new" in internal_p.read_text()
+        assert "+2 new" not in out_p.read_text()

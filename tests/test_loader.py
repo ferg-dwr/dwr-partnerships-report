@@ -167,7 +167,10 @@ class TestPrepareplotDf:
 
 class TestExplodeColumn:
     def test_explodes_correctly(self, tmp_path):
-        row = {**BASE_ROW, "Science and Technology Fields": '["Hydrology", "Ecology", "Snow"]'}
+        row = {
+            **BASE_ROW,
+            "Science and Technology Fields": '["Hydrology", "Ecology", "Snow"]',
+        }
         p = write_csv(tmp_path, "data.csv", [row])
         data = PartnershipData(p)
         exploded = data.explode_column("Science and Technology Fields")

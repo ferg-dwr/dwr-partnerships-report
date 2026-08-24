@@ -185,7 +185,17 @@ def create_issue(diff_path: Path, repo: str, sha: str) -> None:
         }
         color = color_map.get(label, "ededed")
         subprocess.run(
-            ["gh", "label", "create", label, "--color", color, "--repo", repo, "--force"],
+            [
+                "gh",
+                "label",
+                "create",
+                label,
+                "--color",
+                color,
+                "--repo",
+                repo,
+                "--force",
+            ],
             capture_output=True,
         )
 

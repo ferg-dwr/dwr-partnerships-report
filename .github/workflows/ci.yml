@@ -6,9 +6,18 @@ on:
   pull_request:
     branches: [main]        # Runs on PRs targeting main (i.e. develop → main)
 
+# Supersede in-flight runs when new commits land on the same branch/PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint-and-test:
-    name: Lint, type-check, test
+  # Static analysis runs once, not per Python version. Ruff is pinned to
+  # target-version = "py311" and mypy to python_version = "3.11" in
+  # pyproject.toml, so both produce identical results on every interpreter —
+  # matrixing them would just burn minutes for the same answer.
+  lint:
+    name: Lint & type-check
     runs-on: ubuntu-latest
 
     steps:
@@ -18,19 +27,49 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: |
-          pip install -e ".[dev]"
+        run: pip install -e ".[dev]"
 
       - name: Ruff — check formatting
-        run: ruff format --check dwr_report/ tests/
+        run: ruff format --check src/ tests/
 
       - name: Ruff — lint
-        run: ruff check dwr_report/ tests/
+        run: ruff check src/ tests/
 
       - name: Mypy — type check
-        run: mypy dwr_report/
+        # No explicit path: mypy reads `files` from [tool.mypy] in pyproject.toml,
+        # so the path lives in exactly one place.
+        run: mypy
+
+  # Tests run on both the supported floor (3.11, what CI has always used) and
+  # the version actually installed on the dev machine (3.14). A green run on
+  # one does not imply a green run on the other.
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Let every leg finish. If 3.14 breaks, we still want to know whether
+      # 3.11 — the version the project actually claims to support — is fine.
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
 
       - name: Pytest — run tests with coverage
         run: pytest

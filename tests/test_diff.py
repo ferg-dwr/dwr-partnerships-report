@@ -150,8 +150,14 @@ class TestDiffFieldChanges:
 
     def test_list_order_change_not_reported(self, tmp_path):
         """Reordering items in a list field should not count as a change."""
-        old_row = {**BASE_ROW, "Science and Technology Fields": "['Hydrology', 'Ecology']"}
-        new_row = {**BASE_ROW, "Science and Technology Fields": "['Ecology', 'Hydrology']"}
+        old_row = {
+            **BASE_ROW,
+            "Science and Technology Fields": "['Hydrology', 'Ecology']",
+        }
+        new_row = {
+            **BASE_ROW,
+            "Science and Technology Fields": "['Ecology', 'Hydrology']",
+        }
         old = write_csv(tmp_path, "old.csv", [old_row])
         new = write_csv(tmp_path, "new.csv", [new_row])
         result = diff_csvs(old, new)
@@ -173,7 +179,10 @@ class TestDiffFieldChanges:
 
 class TestDiffCollisionWarnings:
     def test_identity_field_change_triggers_collision_warning(self, tmp_path):
-        updated = {**BASE_ROW, "Partnership Organization Name": "NOAA — totally different org"}
+        updated = {
+            **BASE_ROW,
+            "Partnership Organization Name": "NOAA — totally different org",
+        }
         old = write_csv(tmp_path, "old.csv", [BASE_ROW])
         new = write_csv(tmp_path, "new.csv", [updated])
         result = diff_csvs(old, new)
@@ -219,7 +228,14 @@ class TestDiffCLI:
         import sys
 
         result = subprocess.run(
-            [sys.executable, "dwr_report/pipeline/diff.py", str(old), str(new), str(out_json)],
+            [
+                sys.executable,
+                "-m",
+                "dwr_report.pipeline.diff",
+                str(old),
+                str(new),
+                str(out_json),
+            ],
             capture_output=True,
             text=True,
         )
@@ -229,7 +245,10 @@ class TestDiffCLI:
         assert data["warnings"] == []
 
     def test_cli_exits_2_on_collision(self, tmp_path):
-        updated = {**BASE_ROW, "Partnership Organization Name": "Completely Different Org"}
+        updated = {
+            **BASE_ROW,
+            "Partnership Organization Name": "Completely Different Org",
+        }
         old = write_csv(tmp_path, "old.csv", [BASE_ROW])
         new = write_csv(tmp_path, "new.csv", [updated])
         out_json = tmp_path / "diff.json"
@@ -238,7 +257,14 @@ class TestDiffCLI:
         import sys
 
         result = subprocess.run(
-            [sys.executable, "dwr_report/pipeline/diff.py", str(old), str(new), str(out_json)],
+            [
+                sys.executable,
+                "-m",
+                "dwr_report.pipeline.diff",
+                str(old),
+                str(new),
+                str(out_json),
+            ],
             capture_output=True,
             text=True,
         )

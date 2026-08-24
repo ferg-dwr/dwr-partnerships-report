@@ -1,0 +1,46 @@
+<div class="summary-dashboard">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="{{ vb.x }} {{ vb.y }} {{ vb.w }} {{ vb.h }}" preserveAspectRatio="xMidYMid meet" font-family="{{ font }}" style="display:block;width:100%;height:auto;">
+  <rect x="{{ vb.x }}" y="{{ vb.y }}" width="{{ vb.w }}" height="{{ vb.h }}" fill="#FFFFFF"/>
+
+  {# ── Panel titles ── #}
+  {% for t in titles %}
+  <text x="{{ t.x }}" y="{{ t.y }}" font-size="14" font-weight="700" fill="{{ colors.text }}" text-anchor="middle">{{ t.text|e }}</text>
+  {% endfor %}
+
+  {# ── Stat cards ── #}
+  <rect x="{{ stats.card.x }}" y="{{ stats.card.y }}" width="{{ stats.card.w }}" height="{{ stats.card.h }}" rx="6" fill="#FFFFFF" stroke="{{ colors.card_border }}"/>
+  <text x="{{ stats.p_x }}" y="{{ stats.num_y }}" font-size="30" font-weight="700" fill="{{ colors.brand }}" text-anchor="middle">{{ stats.partnerships }}</text>
+  <text x="{{ stats.p_x }}" y="{{ stats.lbl_y }}" font-size="12" fill="{{ colors.muted }}" text-anchor="middle">{{ stats.partnerships_label|e }}</text>
+  <text x="{{ stats.m_x }}" y="{{ stats.num_y }}" font-size="30" font-weight="700" fill="{{ colors.brand }}" text-anchor="middle">{{ stats.money|e }}</text>
+  <text x="{{ stats.m_x }}" y="{{ stats.lbl_y }}" font-size="12" fill="{{ colors.muted }}" text-anchor="middle">Financial Investment *</text>
+
+  {# ── Donut: Partnering Organization Type ── #}
+  {% for s in donut.segments %}
+  <path d="{{ s.d }}" fill="{{ s.color }}" fill-rule="evenodd" stroke="#FFFFFF" stroke-width="1.5"/>
+  {% endfor %}
+  {% for L in donut.legend %}
+  <rect x="{{ L.sx }}" y="{{ L.sy }}" width="9" height="9" rx="1.5" fill="{{ L.color }}"/>
+  <text x="{{ L.tx }}" y="{{ L.ty }}" font-size="10.5" fill="{{ colors.text }}">{{ L.label|e }}</text>
+  <text x="{{ L.vx }}" y="{{ L.ty }}" font-size="10.5" fill="{{ colors.muted }}" text-anchor="end">{{ L.value|e }}</text>
+  {% endfor %}
+
+  {# ── Investment Type: vertical bars ── #}
+  <line x1="{{ vbars.baseline.x1 }}" y1="{{ vbars.baseline.y }}" x2="{{ vbars.baseline.x2 }}" y2="{{ vbars.baseline.y }}" stroke="{{ colors.grid }}"/>
+  {% for b in vbars.bars %}
+  <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="{{ colors.brand }}"/>
+  <text x="{{ b.cx }}" y="{{ b.vy }}" font-size="11" font-weight="600" fill="{{ colors.text }}" text-anchor="middle">{{ b.value }}</text>
+  {% for ln in b.labels %}
+  <text x="{{ b.cx }}" y="{{ ln.y }}" font-size="10" fill="{{ colors.muted }}" text-anchor="middle">{{ ln.text|e }}</text>
+  {% endfor %}
+  {% endfor %}
+
+  {# ── Science Fields / Partnership Activity: horizontal bars ── #}
+  {% for panel in hbar_panels %}
+  {% for r in panel.rows %}
+  <text x="{{ r.lx }}" y="{{ r.ty }}" font-size="10" fill="{{ colors.text }}" text-anchor="end">{{ r.label|e }}</text>
+  <rect x="{{ r.bx }}" y="{{ r.by }}" width="{{ r.bw }}" height="{{ r.bh }}" fill="{{ colors.brand }}"/>
+  <text x="{{ r.vx }}" y="{{ r.ty }}" font-size="10" font-weight="600" fill="{{ colors.text }}">{{ r.value }}</text>
+  {% endfor %}
+  {% endfor %}
+</svg>
+</div>

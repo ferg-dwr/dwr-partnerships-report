@@ -43,7 +43,11 @@ FULL_DIFF: dict = {
         {
             "id": 5,
             "changes": [
-                {"field": "Status of Partnership", "old": '["Active"]', "new": '["Inactive"]'},
+                {
+                    "field": "Status of Partnership",
+                    "old": '["Active"]',
+                    "new": '["Inactive"]',
+                },
                 {
                     "field": "Main DWR Point of Contact",
                     "old": "Smith, Jane@DWR",
@@ -163,7 +167,10 @@ class TestBuildIssueLabels:
         assert "needs-review" in labels
 
     def test_orphan_alone_no_needs_review(self):
-        diff = {**EMPTY_DIFF, "warnings": [{"kind": "orphan", "id": 1, "message": "missing"}]}
+        diff = {
+            **EMPTY_DIFF,
+            "warnings": [{"kind": "orphan", "id": 1, "message": "missing"}],
+        }
         labels = build_issue_labels(diff)
         assert "needs-review" not in labels
 
@@ -225,7 +232,11 @@ class TestBuildIssueBody:
                 {
                     "id": 1,
                     "changes": [
-                        {"field": "Status of Partnership", "old": "Active", "new": "Inactive"}
+                        {
+                            "field": "Status of Partnership",
+                            "old": "Active",
+                            "new": "Inactive",
+                        }
                     ],
                 }
             ],
@@ -267,7 +278,10 @@ class TestCreateIssueSkip:
 
     def test_skips_when_only_warnings_absent(self, tmp_path, capsys):
         """Warnings alone (orphans) should still trigger issue creation."""
-        diff = {**EMPTY_DIFF, "warnings": [{"kind": "orphan", "id": 1, "message": "missing"}]}
+        diff = {
+            **EMPTY_DIFF,
+            "warnings": [{"kind": "orphan", "id": 1, "message": "missing"}],
+        }
         p = write_diff(tmp_path, diff)
         # Should NOT skip — orphan warnings are meaningful
         with patch("subprocess.run") as mock_run:
