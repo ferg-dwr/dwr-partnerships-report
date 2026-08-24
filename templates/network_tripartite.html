@@ -225,8 +225,8 @@
     <summary class="leg-summary">How to use</summary>
     <div class="leg-body">
       <p>Click any <strong>node</strong> to highlight its direct connections across all three columns.</p>
-      <p>Science fields are left, DWR staff are center, divisions/offices/branches are right.</p>
-      <p>Note: only partnerships where staff are listed as primary POC are shown.</p>
+      <p>Science fields are left, DWR staff (each partnership's main point of contact) are center, divisions, offices, and branches are right.</p>
+      <p><strong>Note:</strong> only partnerships where a staff member is the listed main point of contact are shown.</p>
     </div>
   </details>
 
@@ -243,7 +243,7 @@
         <div style="color:#ccc;">↔</div>
         <div style="text-align:center;flex:1;">
           <div style="width:9px;height:9px;border-radius:50%;background:#81C784;margin:0 auto 3px;"></div>
-          <div style="color:#555;font-weight:600;">DWR<br>Staff</div>
+          <div style="color:#555;font-weight:600;">DWR Staff<br>(POC)</div>
           <div style="color:#aaa;font-size:9px;">(center)</div>
         </div>
         <div style="color:#ccc;">↔</div>
@@ -273,8 +273,9 @@
   <!-- ── Top 5 Staff ── -->
   <details class="leg-section">
     <summary class="leg-summary">Top 5 Staff</summary>
-    <div class="leg-body" id="top-staff-list">
-      <!-- populated by JS -->
+    <div class="leg-body">
+      <div style="font-size:9px;color:#888;margin-bottom:4px;line-height:1.4;">Count = number of distinct science fields each staffer connects to, across partnerships where they are the listed point of contact.</div>
+      <div id="top-staff-list"><!-- populated by JS --></div>
     </div>
   </details>
 

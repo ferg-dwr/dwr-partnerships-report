@@ -3,16 +3,27 @@ name: Generate Partnership Report
 on:
   push:
     branches:
-      - main                  # Only publish reports from main
+      - main                            # Only publish reports from main
     paths:
-      - "data/latest.csv"     # New CSV upload
-      - "templates/**"        # Network/report template changes
-      - "dwr_report/**"       # Pipeline or chart code changes
+      - "data/**"                       # CSV upload OR taxonomy/node-label edits
+      - "templates/**"                  # Network/report template changes
+      - "src/dwr_report/**"             # Pipeline or chart code changes
 
 permissions:
-  pages: write
-  id-token: write
-  issues: write              # Needed to create changelog issues
+  # Declaring ANY permission sets every unlisted scope to `none`, so each one
+  # the workflow needs must appear here explicitly — including contents.
+  contents: read                        # actions/checkout
+  pages: write                          # deploy to Pages
+  id-token: write                       # OIDC verification for the deployment
+  issues: write                         # create changelog issues
+
+# Top-level key: a sibling of `on`, `permissions`, `env`, and `jobs` — NOT
+# nested inside a job. Workflow-level so build and deploy queue as one unit.
+concurrency:
+  group: pages
+  # false, unlike CI: let an in-flight deploy finish rather than cancel it
+  # partway through publishing.
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -25,15 +36,25 @@ jobs:
       - name: Checkout repo (with full history for diff)
         uses: actions/checkout@v5
         with:
-          fetch-depth: 2      # Need current + previous commit for diff
+          fetch-depth: 2                # Need current + previous commit for diff
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      # cairosvg links against the system Cairo library; the pip package alone
+      # is not enough and fails at import time without it.
+      - name: Install system dependencies for PDF export
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        # [pdf] pulls cairosvg + pypdf, needed by the --pdf step below.
+        run: pip install -e ".[dev,pdf]"
 
       - name: Create reports directory
         run: mkdir -p reports
@@ -44,28 +65,74 @@ jobs:
             || cp data/latest.csv data/previous.csv
           # If this is the very first commit, previous = current (empty diff)
 
+      # `python -m <dotted.module.path>` — no directory separators, no .py.
+      # diff.py takes three POSITIONAL arguments; it exits 1 on wrong arg count.
       - name: Run diff + ID watchdog
         id: diff
         run: |
-          python dwr_report/pipeline/diff.py data/previous.csv data/latest.csv reports/diff.json
-        # Exit code 2 = collision warnings → blocks report publish (see diff.py)
+          python -m dwr_report.pipeline.diff \
+            data/previous.csv \
+            data/latest.csv \
+            reports/diff.json
+        # Exit code 2 = collision warnings → non-zero fails the job, which stops
+        # every later step, so the report is never published. (See diff.py.)
 
+      # Writes BOTH reports into the --output directory:
+      #   reports/index.html            (external profile)
+      #   reports/internal_report.html  (internal profile)
+      # --pdf additionally writes reports/report.pdf and flips `pdf_available`,
+      # which is what makes the "Export Report" nav link render.
       - name: Generate report
         run: |
-          python dwr_report/pipeline/generate_report.py \
+          python -m dwr_report.pipeline.generate_report \
             --csv data/latest.csv \
             --diff reports/diff.json \
             --output reports/index.html \
-            --taxonomy data/dwr_custom_taxonomy.csv
+            --taxonomy data/dwr_custom_taxonomy.csv \
+            --pdf
 
+      # create_issue.py takes FLAGS (--diff/--repo/--sha) — a different CLI
+      # shape from diff.py above. Same package, different argument style.
       - name: Create changelog issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python dwr_report/pipeline/create_issue.py             --diff reports/diff.json             --repo ${{ github.repository }}             --sha ${{ github.sha }}
+          python -m dwr_report.pipeline.create_issue \
+            --diff reports/diff.json \
+            --repo ${{ github.repository }} \
+            --sha ${{ github.sha }}
 
       - name: Copy upload UI into Pages artifact
-        run: cp -r upload-ui reports/upload-ui
+        # `cp -r` on an empty directory succeeds silently, so verify the file is
+        # actually there rather than shipping a nav link that 404s.
+        run: |
+          test -f upload-ui/index.html \
+            || { echo "::error::upload-ui/index.html is missing"; exit 1; }
+          cp -r upload-ui reports/upload-ui
+
+      # ---------------------------------------------------------------------
+      # DECISION PENDING — internal report is currently world-readable.
+      #
+      # The upload step below publishes everything under reports/, and Pages on
+      # a public repo has no authentication. That means internal_report.html is
+      # live at a public URL: unlisted, but not protected.
+      #
+      # Uncommenting these two steps pulls it out of the Pages artifact and
+      # ships it as an Actions artifact instead (repo-collaborators only).
+      # Left commented because removing a URL people may already be using is
+      # your call, not a silent change — see M5 in PRE-PUSH-MILESTONES.md.
+      # ---------------------------------------------------------------------
+      # - name: Withhold internal report from Pages
+      #   run: |
+      #     mkdir -p private
+      #     mv reports/internal_report.html private/
+      #
+      # - name: Upload internal report as a private artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: internal-report
+      #     path: private/
+      #     retention-days: 30
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

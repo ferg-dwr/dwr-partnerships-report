@@ -21,7 +21,8 @@ ENV/
 # Environment and secrets
 .env
 .env.*
-!.env.example        # Allow a committed example/template
+# Allow a committed example/template
+!.env.example
 
 # Type checking and linting caches
 .mypy_cache/
@@ -46,7 +47,12 @@ Desktop.ini
 *~
 
 # Project-specific
-data/previous.csv    # Temp file created during Actions run, never committed
+# Temp file created during the Actions run, never committed
+data/previous.csv
+
+# Real partnership inventory — 119 rows with 42 partner emails and 53 named
+# DWR staff. Kept local for testing; latest.csv is the safe pipeline input.
+data/inventory.csv
 
 # Generated reports — committed only by GitHub Actions
 reports/*

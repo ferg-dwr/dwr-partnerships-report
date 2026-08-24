@@ -17,7 +17,9 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
+from dwr_report import content
 from dwr_report.charts.networks import network_bipartite, network_tripartite
+from dwr_report.charts.summary import summary_dashboard
 from dwr_report.charts.treemaps import treemap_coverage
 from dwr_report.ingest.loader import PartnershipData
 from dwr_report.ingest.taxonomy import enrich_science_fields
@@ -228,8 +230,11 @@ def _assemble_html(
     iframes: dict[str, str],
     generated_at: str,
     template_path: Path = REPORT_TEMPLATE,
+    profile: str = "internal",
+    summary_html: str = "",
+    pdf_available: bool = False,
 ) -> str:
-    """Render the report HTML from a Jinja2 template."""
+    """Render the report HTML from a Jinja2 template for the given profile."""
     env = Environment(
         loader=FileSystemLoader(str(template_path.parent)),
         autoescape=False,  # HTML content is pre-rendered and trusted
@@ -237,6 +242,10 @@ def _assemble_html(
     template = env.get_template(template_path.name)
     return template.render(
         generated_at=generated_at,
+        profile=profile,
+        content=content,
+        summary_dashboard=summary_html,
+        pdf_available=pdf_available,
         diff_banner=diff_banner,
         iframe_treemap=iframes.get("treemap_coverage", ""),
         iframe_tripartite=iframes.get("network_tripartite", ""),
@@ -257,6 +266,7 @@ def generate(
     report_template: Path = REPORT_TEMPLATE,
     tripartite_template: Path = TRIPARTITE_TEMPLATE,
     bipartite_template: Path = BIPARTITE_TEMPLATE,
+    pdf: bool = False,
 ) -> None:
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -279,13 +289,46 @@ def generate(
         "style='border:none;outline:none;display:block;'></iframe>"
     )
 
-    print("Assembling report...")
+    print("Assembling reports...")
     diff_banner = _diff_banner(diff_path)
     generated_at = datetime.now(UTC).strftime("%B %d, %Y at %H:%M UTC")
-    html = _assemble_html(diff_banner, charts, iframes, generated_at, report_template)
+    summary_html = summary_dashboard(data)
 
-    output_path.write_text(html, encoding="utf-8")
-    print(f"Report written to '{output_path}'")
+    # External report -> output_path (index.html): summary + treemap + bipartite.
+    # No staff/POC network, diff banner, or upload UI.
+    external_html = _assemble_html(
+        diff_banner,
+        charts,
+        iframes,
+        generated_at,
+        report_template,
+        profile="external",
+        summary_html=summary_html,
+        pdf_available=pdf,
+    )
+    output_path.write_text(external_html, encoding="utf-8")
+    print(f"External report written to '{output_path}'")
+
+    # Internal report -> internal_report.html: full report (tripartite, diff, upload).
+    internal_html = _assemble_html(
+        diff_banner,
+        charts,
+        iframes,
+        generated_at,
+        report_template,
+        profile="internal",
+    )
+    internal_path = output_dir / "internal_report.html"
+    internal_path.write_text(internal_html, encoding="utf-8")
+    print(f"Internal report written to '{internal_path}'")
+
+    # Optional: export the summary dashboard as a vector PDF with hover tooltips.
+    # Imported lazily so cairosvg/pypdf are only needed when --pdf is used.
+    if pdf:
+        from dwr_report.pipeline.export_pdf import export_report_pdf
+
+        pdf_path = export_report_pdf(data, output_dir / "report.pdf", taxonomy_path)
+        print(f"Report PDF written to '{pdf_path}'")
 
 
 if __name__ == "__main__":
@@ -297,6 +340,11 @@ if __name__ == "__main__":
     parser.add_argument("--report-template", type=Path, default=REPORT_TEMPLATE)
     parser.add_argument("--tripartite-template", type=Path, default=TRIPARTITE_TEMPLATE)
     parser.add_argument("--bipartite-template", type=Path, default=BIPARTITE_TEMPLATE)
+    parser.add_argument(
+        "--pdf",
+        action="store_true",
+        help="also export the summary dashboard as a PDF with hover tooltips",
+    )
     args = parser.parse_args()
 
     generate(
@@ -307,4 +355,5 @@ if __name__ == "__main__":
         report_template=args.report_template,
         tripartite_template=args.tripartite_template,
         bipartite_template=args.bipartite_template,
+        pdf=args.pdf,
     )

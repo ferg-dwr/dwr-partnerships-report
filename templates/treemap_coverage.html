@@ -75,6 +75,7 @@
 <!-- Injected by Jinja2 at report generation time -->
 <script>
 window.DWR_TAXONOMY = {{ taxonomy_json | tojson }};
+window.DWR_TERMS = {{ terms | tojson }};
 </script>
 
 <script type="text/babel">
@@ -302,8 +303,10 @@ function CategoryHeader({ header, fill, isZoomed, onClick, hover, onEnter, onLea
   const { x, y, w, headerH, category, total, gapCount } = header;
   const hFill = hover ? "#1456A0" : fill;
   // Adaptive meta
-  const metaLong  = `${total} partnership${total!==1?"s":""}${gapCount>0?` · ${gapCount} gap${gapCount!==1?"s":""}` : ""}`;
-  const metaShort = `${total}p${gapCount>0?` · ${gapCount}g`:""}`;
+  // `total` sums this category's subfield counts, so an initiative tagged with two
+  // subfields in the same category is counted twice — these are field tags.
+  const metaLong  = `${total} field tag${total!==1?"s":""}${gapCount>0?` · ${gapCount} gap${gapCount!==1?"s":""}` : ""}`;
+  const metaShort = `${total}t${gapCount>0?` · ${gapCount}g`:""}`;
   const meta = (metaLong.length * 6.5 < w - 20) ? metaLong : metaShort;
   const clipId = `hdr-${Math.round(x)}-${Math.round(y)}`;
   const pad = isZoomed ? 22 : 10;
@@ -443,11 +446,23 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Re-post height whenever zoom state changes
+  // Re-post height + summary stats on mount and whenever the layout changes
+  // (zoom or container width). Width is key: the ResizeObserver corrects the
+  // initial 900px guess, and the iframe must be told the new height.
   useEffect(() => {
-    setTimeout(postHeight, 100);
-    setTimeout(postHeight, 400);
-  }, [zoomCat]);
+    function sync() {
+      postHeight();
+      window.parent.postMessage({
+        type: "tm-stats",
+        totalPart: totalPart, totalGaps: totalGaps,
+        totalCats: totalCats, coveredCats: coveredCats,
+        totalSubs: totalSubs, maxCount: maxCount
+      }, "*");
+    }
+    sync();
+    setTimeout(sync, 100);
+    setTimeout(sync, 400);
+  }, [zoomCat, width]);
 
   // Fixed aspect ratio height — matches container width proportionally
   // Zoomed view needs more height since it shows one category at full size
@@ -457,6 +472,7 @@ function App() {
   const maxCount   = Math.max(...allCounts, 1);
   const totalPart  = allCounts.reduce((s, n) => s + n, 0);
   const totalGaps  = allCounts.filter((c) => c === 0).length;
+  const coveredCats = taxonomy.filter((c) => c.subfields.some((s) => s.count > 0)).length;
   const totalCats  = taxonomy.length;
   const totalSubs  = allCounts.length;
   const maxCatTotal = Math.max(...taxonomy.map((c) => c.subfields.reduce((s,f) => s+f.count, 0)), 1);
@@ -517,7 +533,7 @@ function App() {
             <div className="cat">{tip.datum.category}</div>
             <div className="name">{tip.datum.name}</div>
             <div className="count">
-              <span className="lbl">Partnerships</span>
+              <span className="lbl">{window.DWR_TERMS.initiatives}</span>
               <span className={`val${tip.datum.count===0?" gap":""}`}>
                 {tip.datum.count === 0 ? "0 — coverage gap" : tip.datum.count}
               </span>

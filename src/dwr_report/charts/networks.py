@@ -15,6 +15,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
+from dwr_report.charts.theme import ORG_TYPE_COLORS, ORG_TYPE_FALLBACK
 from dwr_report.ingest.loader import PartnershipData, to_list_if_listlike
 
 # vis-network CDN reference injected into templates as {{ vis_js_cdn }}
@@ -54,22 +55,6 @@ _DIVISION_PALETTE = [
     "#00695C",
     "#004D40",
 ]
-
-_ORG_TYPE_PALETTE = {
-    "University": "#1E88E5",
-    "Federal agency or department": "#E53935",
-    "State agency or department": "#43A047",
-    "Public/Private": "#FB8C00",
-    "Public Research Lab": "#8E24AA",
-    "NGO": "#00ACC1",
-    "Network/ Collaborative": "#F4511E",
-    "Local or Regional agency": "#6D4C41",
-    "Non-profit": "#D81B60",
-    "Tribe": "#3949AB",
-    "Other": "#90A4AE",
-}
-
-_FALLBACK_COLORS = ["#78909C", "#A1887F", "#4DD0E1", "#DCE775", "#FFD54F"]
 
 
 def _load_template(template_path: Path) -> Any:
@@ -363,10 +348,10 @@ def network_bipartite(
     org_type_colors: dict[str, str] = {}
     fi = 0
     for ot in org_types_present:
-        if ot in _ORG_TYPE_PALETTE:
-            org_type_colors[ot] = _ORG_TYPE_PALETTE[ot]
+        if ot in ORG_TYPE_COLORS:
+            org_type_colors[ot] = ORG_TYPE_COLORS[ot]
         else:
-            org_type_colors[ot] = _FALLBACK_COLORS[fi % len(_FALLBACK_COLORS)]
+            org_type_colors[ot] = ORG_TYPE_FALLBACK[fi % len(ORG_TYPE_FALLBACK)]
             fi += 1
 
     DOT_SIZE_MIN = 8
@@ -400,7 +385,10 @@ def network_bipartite(
                 "label": "",
                 "shape": "dot",
                 "size": size,
-                "color": {"background": division_colors[d], "border": division_colors[d]},
+                "color": {
+                    "background": division_colors[d],
+                    "border": division_colors[d],
+                },
                 "font": {"size": 0},
                 "borderWidth": 0,
                 "group": "division",
