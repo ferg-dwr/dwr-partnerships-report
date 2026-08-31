@@ -233,6 +233,21 @@ class TestTreemapTerminology:
         assert "field tag" in svg
         assert ">PARTNERSHIPS<" not in svg
 
+    def test_narrow_headers_fall_back_to_a_shorter_meta(self, tmp_path):
+        """A clipped '3 field ta' reads as a rendering bug, so the meta line
+        steps down through shorter forms until one fits the header width."""
+        data = make_data(tmp_path, [BASE_ROW, TWO_FIELD_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        # A narrow canvas forces every category header to be tight.
+        svg, _ = treemap_coverage_svg(data, tax_p, width=340)
+
+        # Nothing may be emitted mid-word: every rendered meta must be one of
+        # the complete candidate forms, never a prefix of one.
+        assert "field ta<" not in svg
+        assert "field tag<" not in svg
+        assert "tag<" not in svg
+
     def test_browser_treemap_shares_the_same_vocabulary(self, tmp_path):
         """The HTML and SVG renderers must not drift apart on wording."""
         data = make_data(tmp_path)

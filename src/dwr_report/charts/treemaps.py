@@ -254,6 +254,12 @@ def _squarify(items: list[dict], x: float, y: float, w: float, h: float) -> list
     return result
 
 
+# Average glyph width as a fraction of font size. Deliberately generous: the
+# SVG is rendered with a proportional font whose real metrics we cannot measure
+# here, and under-estimating means labels get clipped mid-word.
+_CHAR_W = 0.66
+
+
 def _fit_label(name: str, w: float, h: float, min_size: int = 9, max_size: int = 13) -> dict | None:
     pad = 7
     iw, ih = w - pad * 2, h - pad * 2
@@ -261,7 +267,7 @@ def _fit_label(name: str, w: float, h: float, min_size: int = 9, max_size: int =
         return None
     words = name.split()
     for size in range(max_size, min_size - 1, -1):
-        cw, lh = size * 0.6, size * 1.15
+        cw, lh = size * _CHAR_W, size * 1.15
         lines: list[str] = []
         cur = ""
         for wd in words:
@@ -439,15 +445,28 @@ def treemap_coverage_svg(
         pad = 10
         title_size = 11.5
         max_title_w = hd["w"] - pad * 2
-        if len(hd["category"]) * (title_size * 0.62) > max_title_w:
-            title_size = max(8.0, max_title_w / (len(hd["category"]) * 0.62 or 1))
+        if len(hd["category"]) * (title_size * _CHAR_W) > max_title_w:
+            title_size = max(8.0, max_title_w / (len(hd["category"]) * _CHAR_W or 1))
         title_y = hd["y"] + hd["header_h"] * 0.38 + title_size * 0.35
         # hd["total"] sums this category's subfield counts, so an initiative tagged
         # with two subfields in the same category is counted twice — these are field
         # tags, not distinct initiatives.
-        meta = f"{hd['total']} field tag{'s' if hd['total'] != 1 else ''}"
+        # Progressively shorter forms; the narrow panels cannot fit the long one
+        # and a clipped "3 field ta" reads as a rendering bug.
+        n_tags = hd["total"]
+        candidates = [f"{n_tags} field tag{'s' if n_tags != 1 else ''}"]
         if hd["gap_count"] > 0:
-            meta += f" \u00b7 {hd['gap_count']} gap{'s' if hd['gap_count'] != 1 else ''}"
+            n_gap = hd["gap_count"]
+            candidates.insert(0, f"{candidates[0]} \u00b7 {n_gap} without partnerships")
+            candidates.append(f"{n_tags} tags \u00b7 {n_gap} none")
+        candidates.append(f"{n_tags} tags")
+        candidates.append(str(n_tags))
+        meta_size = 9.5
+        meta = ""
+        for cand in candidates:
+            if len(cand) * meta_size * _CHAR_W <= max_title_w:
+                meta = cand
+                break
         meta_y = hd["y"] + hd["header_h"] * 0.72 + 3
         clip = f"hdr{int(hd['x'])}_{int(hd['y'])}"
         parts.append(
@@ -456,8 +475,13 @@ def treemap_coverage_svg(
             f'<g clip-path="url(#{clip})">'
             f'<text x="{hd["x"] + pad:.1f}" y="{title_y:.1f}" fill="#FFFFFF" '
             f'font-size="{title_size:.1f}" font-weight="700">{escape(hd["category"])}</text>'
-            f'<text x="{hd["x"] + pad:.1f}" y="{meta_y:.1f}" fill="#FFFFFF" fill-opacity="0.65" '
-            f'font-family="monospace" font-size="9.5">{escape(meta)}</text></g>'
+            + (
+                f'<text x="{hd["x"] + pad:.1f}" y="{meta_y:.1f}" fill="#FFFFFF" '
+                f'fill-opacity="0.65" font-size="{meta_size}">{escape(meta)}</text>'
+                if meta
+                else ""
+            )
+            + "</g>"
         )
 
         for cell in g["cells"]:
@@ -487,7 +511,7 @@ def treemap_coverage_svg(
                     label, rotated = rl, True
             if label is None and w >= 20 and h >= 12:
                 # Last resort: truncate to one small horizontal line
-                max_chars = max(2, int((w - 8) / (8 * 0.6)))
+                max_chars = max(2, int((w - 8) / (8 * _CHAR_W)))
                 nm = d["name"]
                 trunc = nm if len(nm) <= max_chars else nm[: max_chars - 1] + "\u2026"
                 label = {"lines": [trunc], "size": 8, "line_h": 8 * 1.15}
