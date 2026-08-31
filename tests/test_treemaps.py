@@ -9,7 +9,12 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from dwr_report.charts.treemaps import treemap, treemap_coverage
+from dwr_report import content
+from dwr_report.charts.treemaps import (
+    treemap,
+    treemap_coverage,
+    treemap_coverage_svg,
+)
 from dwr_report.ingest.loader import PartnershipData
 from dwr_report.ingest.taxonomy import enrich_science_fields
 
@@ -152,3 +157,103 @@ class TestTreemapCoverage:
         html = treemap_coverage(data, tax_p)
         assert "window.DWR_TAXONOMY" in html
         assert "subfields" in html
+
+
+# ---------------------------------------------------------------------------
+# Terminology guards
+#
+# Lindsay Correa's July 2026 review flagged that the treemap totals were labelled
+# "PARTNERSHIPS" when they actually count science field tags. A partnership
+# initiative tagged with four science fields contributes four field tags, so the
+# two numbers are never interchangeable. These tests pin the vocabulary so the
+# conflation cannot silently return — a label is exactly the kind of string
+# someone edits in passing.
+# ---------------------------------------------------------------------------
+
+
+TWO_FIELD_ROW = {
+    **BASE_ROW,
+    "ID": 2,
+    "Science and Technology Fields": '["Hydrology", "Climatology"]',
+}
+
+
+class TestTreemapTerminology:
+    def test_grand_total_is_labelled_field_tags_not_partnerships(self, tmp_path):
+        """Two initiatives carrying three field tags must not read as 3 partnerships."""
+        data = make_data(tmp_path, [BASE_ROW, TWO_FIELD_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        svg, _ = treemap_coverage_svg(data, tax_p)
+
+        # 1 tag on BASE_ROW + 2 tags on TWO_FIELD_ROW = 3 field tags, 2 initiatives.
+        assert ">3<" in svg
+        assert content.TERM_FIELD_TAGS.upper() in svg
+        assert ">PARTNERSHIPS<" not in svg  # the original mislabel
+
+    def test_science_areas_shows_a_denominator(self, tmp_path):
+        """Lindsay asked '8 of 8?' — the stat needs parity with 'x/y SUBFIELDS'."""
+        data = make_data(tmp_path, [BASE_ROW, TWO_FIELD_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        svg, _ = treemap_coverage_svg(data, tax_p)
+
+        # Both taxonomy categories have a covered subfield; Meteorology is a gap.
+        assert ">2/2<" in svg
+        assert ">2/3<" in svg
+        assert "SCIENCE AREAS COVERED" in svg
+
+    def test_cell_tooltips_count_initiatives(self, tmp_path):
+        """A subfield's count IS a distinct initiative count, so say so."""
+        data = make_data(tmp_path, [BASE_ROW, TWO_FIELD_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        _, regions = treemap_coverage_svg(data, tax_p)
+
+        tips = [tip for *_, tip in regions]
+        assert any(t == "Hydrology: 2 partnership initiatives" for t in tips)
+        assert any(t == "Climatology: 1 partnership initiative" for t in tips)
+
+    def test_cells_with_no_partnerships_are_labelled(self, tmp_path):
+        data = make_data(tmp_path, [BASE_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        _, regions = treemap_coverage_svg(data, tax_p)
+
+        tips = [tip for *_, tip in regions]
+        assert f"Meteorology: {content.TERM_NO_PARTNERSHIPS_LOWER}" in tips
+
+    def test_category_headers_say_field_tags(self, tmp_path):
+        """Category totals sum subfield counts, so they double-count initiatives."""
+        data = make_data(tmp_path, [BASE_ROW, TWO_FIELD_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        svg, _ = treemap_coverage_svg(data, tax_p)
+
+        assert "field tag" in svg
+        assert ">PARTNERSHIPS<" not in svg
+
+    def test_narrow_headers_fall_back_to_a_shorter_meta(self, tmp_path):
+        """A clipped '3 field ta' reads as a rendering bug, so the meta line
+        steps down through shorter forms until one fits the header width."""
+        data = make_data(tmp_path, [BASE_ROW, TWO_FIELD_ROW])
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        # A narrow canvas forces every category header to be tight.
+        svg, _ = treemap_coverage_svg(data, tax_p, width=340)
+
+        # Nothing may be emitted mid-word: every rendered meta must be one of
+        # the complete candidate forms, never a prefix of one.
+        assert "field ta<" not in svg
+        assert "field tag<" not in svg
+        assert "tag<" not in svg
+
+    def test_browser_treemap_shares_the_same_vocabulary(self, tmp_path):
+        """The HTML and SVG renderers must not drift apart on wording."""
+        data = make_data(tmp_path)
+        tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
+        enrich_science_fields(data, tax_p)
+        html = treemap_coverage(data, tax_p)
+
+        assert "window.DWR_TERMS" in html
+        assert content.TERM_INITIATIVES in html

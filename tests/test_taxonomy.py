@@ -104,7 +104,10 @@ class TestEnrichScienceFields:
         assert data.df["1st Level Science Category"].iloc[0] == "Geological and Earth Sciences"
 
     def test_multiple_fields_same_category_returns_string(self, tmp_path):
-        row = {**BASE_ROW, "Science and Technology Fields": '["Climatology", "Meteorology"]'}
+        row = {
+            **BASE_ROW,
+            "Science and Technology Fields": '["Climatology", "Meteorology"]',
+        }
         p = write_csv(tmp_path, "data.csv", [row])
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         data = PartnershipData(p)
@@ -113,7 +116,10 @@ class TestEnrichScienceFields:
         assert data.df["1st Level Science Category"].iloc[0] == "Atmospheric Sciences"
 
     def test_multiple_fields_different_categories_returns_list(self, tmp_path):
-        row = {**BASE_ROW, "Science and Technology Fields": '["Hydrology", "Climatology"]'}
+        row = {
+            **BASE_ROW,
+            "Science and Technology Fields": '["Hydrology", "Climatology"]',
+        }
         p = write_csv(tmp_path, "data.csv", [row])
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         data = PartnershipData(p)
