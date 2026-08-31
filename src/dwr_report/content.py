@@ -45,25 +45,37 @@ def plural_field_tags(n: int) -> str:
 # ---------------------------------------------------------------------------
 # Science field taxonomy definitions (supplied by Lindsay, July 2026).
 TAXONOMY_URL = "https://cadwr.app.box.com/s/bq56dj39aqzb5cc526ewcul5v5606eew"
-TAXONOMY_LINK_TEXT = "science field taxonomy definitions"
+TAXONOMY_LINK_TEXT = "Science field definitions"
+
+# Wording for subfields with no tagged initiatives. "Coverage gap" read as a
+# judgement about DWR's programme; this is purely descriptive.
+TERM_NO_PARTNERSHIPS = "No Recorded Partnerships"
+TERM_NO_PARTNERSHIPS_LOWER = "no recorded partnerships"
 
 # Public partnerships dashboard, referenced in the introduction.
 # LEAVE EMPTY until the URL is confirmed — an empty value keeps Lindsay's
 # visible "[add link]" placeholder in the copy so it cannot ship unnoticed.
+# Empty until Lindsay supplies it. While empty the reference is simply omitted
+# rather than printing a visible placeholder into a distributed report.
 DASHBOARD_URL = ""
-_DASHBOARD_REF = f"({DASHBOARD_URL})" if DASHBOARD_URL else "[add link]"
+_DASHBOARD_REF = f" ({DASHBOARD_URL})" if DASHBOARD_URL else ""
 
 INTRO_HEADING = "Background and Purpose"
 INTRO_PARAGRAPHS = [
     "The California Department of Water Resources engages in Science and Technology "
+    "partnerships with academic, tribal, federal and State agency, non-profit, and "
     "private sector organizations. Partnership types range from contractual agreements, "
     "in-kind support, to advisory committee participation. As a large organization with "
     "many science and engineering staff, the partnerships are evolving. In 2025, DWR "
-    "established an inventory and dashboard [add link] of its partnerships based on "
-    f"established an inventory and dashboard {_DASHBOARD_REF} of its partnerships based on "
+    f"established an inventory and dashboard{_DASHBOARD_REF} of its partnerships based on "
     "self-reported data from DWR leads for science and technology initiatives since 2020 "
     "(active or inactive). While the dashboard is updated annually with some ongoing "
     "inputs, the partnerships shown are not comprehensive and may not accurately reflect "
+    "partnership status.",
+    "This supplemental report offers a snapshot of DWR's science and technology "
+    "partnerships at time of publication, which enables measuring partnership changes "
+    "over time. It also includes additional supplemental figures that highlight the "
+    "diversity, concentration, and gaps in science partnership fields.",
 ]
 CONTACT_PREFIX = (
     "For more information on DWR Science and Technology partnerships and this report, "
@@ -71,10 +83,10 @@ CONTACT_PREFIX = (
 )
 CONTACT_EMAIL = "dwrscience@water.ca.gov"
 
+# Caption explaining the investment types shown in the dashboard.
 INVESTMENT_NOTE = (
     "Partnerships can involve financial investment from DWR, in-kind support (DWR staff "
     "time to support partnership activities), or both. Scoping partnerships are in "
-    "progress with in-kind support, but without a dedicated partnership activity."
     "progress with in-kind support, but without a dedicated partnership activity. "
     "Because a single partnership can be counted in more than one category, these bars "
     f"add up to more than the total number of {TERM_INITIATIVES_LOWER}."
@@ -106,8 +118,8 @@ TREEMAP_HOW_TO_READ = [
     "Each rectangle is a science subfield, grouped under its science category.",
     "A rectangle's size and color both show how many partnership initiatives are "
     "tagged with that subfield — larger and darker means more.",
-    "Grey hatched rectangles are coverage gaps: subfields in the taxonomy that no "
-    "partnership initiative is currently tagged with.",
+    "Grey hatched rectangles have no recorded partnerships: subfields in the "
+    "taxonomy that no partnership initiative is currently tagged with.",
     "This figure shows where partnerships exist across fields, not how large, "
     "well-funded, or active any individual partnership is.",
 ]

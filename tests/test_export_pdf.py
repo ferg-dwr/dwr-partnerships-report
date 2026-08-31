@@ -92,6 +92,25 @@ def _reader(path: Path):
     return PdfReader(str(path))
 
 
+def _squash(text: str) -> str:
+    """Strip all whitespace so assertions survive pypdf version differences.
+
+    pypdf infers word spacing from glyph positions and the heuristic changed
+    between 5.x and 6.x: 6.14 extracts the small grey disclaimer run as
+    "Self-reportedrelevantcontractamount". The text is correct in the PDF
+    (pdftotext reads it fine), so comparisons ignore spacing entirely.
+    """
+    return "".join(text.split())
+
+
+def _page_text(path: Path, index: int) -> str:
+    return _squash(_reader(path).pages[index].extract_text())
+
+
+def _all_text(path: Path) -> str:
+    return _squash("".join(p.extract_text() for p in _reader(path).pages))
+
+
 # ---------------------------------------------------------------------------
 # Structure
 # ---------------------------------------------------------------------------
@@ -122,21 +141,21 @@ class TestPdfStructure:
 
 class TestReviewFixes:
     def test_intro_and_disclaimers_are_present(self, built_pdf):
-        text = "".join(p.extract_text() for p in _reader(built_pdf).pages)
-        assert content.INTRO_HEADING in text
-        assert "Self-reported relevant contract amount" in text
-        assert "in-kind support" in text.lower()
+        text = _all_text(built_pdf)
+        assert _squash(content.INTRO_HEADING) in text
+        assert _squash(content.FINANCIAL_DISCLAIMER) in text
+        assert _squash("in-kind support") in text.lower()
 
     def test_treemap_page_has_title_and_how_to_read(self, built_pdf):
-        page = _reader(built_pdf).pages[2].extract_text()
-        assert content.TREEMAP_TITLE in page
-        assert "How to read this figure" in page
+        page = _page_text(built_pdf, 2)
+        assert _squash(content.TREEMAP_TITLE) in page
+        assert _squash("How to read this figure") in page
 
     def test_treemap_page_explains_field_tags_versus_initiatives(self, built_pdf):
         """The 437-vs-119 explanation Lindsay asked for."""
-        page = _reader(built_pdf).pages[2].extract_text()
-        assert content.TERM_FIELD_TAGS_LOWER in page
-        assert content.TERM_INITIATIVES_LOWER in page
+        page = _page_text(built_pdf, 2)
+        assert _squash(content.TERM_FIELD_TAGS_LOWER) in page
+        assert _squash(content.TERM_INITIATIVES_LOWER) in page
 
     def test_taxonomy_url_is_a_clickable_link_annotation(self, built_pdf):
         """Not just printed text — a real /Link annot with a URI action."""
@@ -147,10 +166,12 @@ class TestReviewFixes:
 
     def test_stat_card_says_initiatives_not_partnerships(self, built_pdf):
         """The 119 is a distinct-row count; its label must say so."""
-        page = _reader(built_pdf).pages[1].extract_text()
-        assert content.TERM_INITIATIVES in page
+        page = _page_text(built_pdf, 1)
+        assert _squash(content.TERM_INITIATIVES) in page
 
     def test_treemap_totals_are_labelled_field_tags(self, built_pdf):
-        page = _reader(built_pdf).pages[2].extract_text()
-        assert content.TERM_FIELD_TAGS.upper() in page.upper()
-        assert "PARTNERSHIPS\n" not in page.upper()
+        page = _page_text(built_pdf, 2)
+        assert _squash(content.TERM_FIELD_TAGS).upper() in page.upper()
+        # The negative guard — that the grand total is not labelled PARTNERSHIPS
+        # on its own — lives in test_treemaps.py against the SVG, where element
+        # boundaries are exact. Extracted PDF text has no reliable delimiters.

@@ -34,13 +34,18 @@ class TestVocabulary:
         assert content.TAXONOMY_URL.startswith("https://")
 
 
-class TestDashboardPlaceholder:
-    def test_placeholder_is_visible_while_the_url_is_unset(self):
-        """An unset DASHBOARD_URL must leave Lindsay's '[add link]' marker in the
-        copy, so an unfinished introduction cannot ship unnoticed."""
+class TestDashboardReference:
+    def test_no_placeholder_text_ever_reaches_the_report(self):
+        """The draft marker must never appear in a distributed report."""
+        body = " ".join(content.INTRO_PARAGRAPHS)
+        assert "[add link]" not in body
+        assert "add link" not in body
+
+    def test_url_is_included_once_supplied(self):
+        """While DASHBOARD_URL is empty the reference is simply omitted; setting
+        it should splice the URL into the introduction without leaving artefacts."""
         body = " ".join(content.INTRO_PARAGRAPHS)
         if content.DASHBOARD_URL:
             assert content.DASHBOARD_URL in body
-            assert "[add link]" not in body
         else:
-            assert "[add link]" in body
+            assert "inventory and dashboard of its partnerships" in body

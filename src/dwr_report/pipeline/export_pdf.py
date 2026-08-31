@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import io
 import re
+from datetime import datetime
 from html import escape
 from pathlib import Path
 
@@ -37,6 +38,9 @@ from dwr_report.charts.theme import FONT
 from dwr_report.charts.treemaps import treemap_coverage_svg
 from dwr_report.ingest.loader import PartnershipData
 
+# Uniform page canvas: US Letter landscape at 96dpi-ish SVG units.
+_PAGE_W, _PAGE_H = 1100.0, 850.0
+_PAGE_MARGIN = 26.0  # keeps figures off the trim edge
 _NOTE_H = 34  # top band height (SVG units) reserved for the note
 _NOTE = (
     "NOTE: Open this PDF in Adobe Acrobat Reader to see the interactive "
@@ -90,12 +94,15 @@ def _wrap_text(text: str, max_width: float, font_size: float, cw: float = 0.54) 
     return lines
 
 
-def _intro_svg(width: float = 920) -> str:
+def _intro_svg(width: float = 920, generated_at: str | None = None) -> str:
     """Title + Background-and-Purpose intro page (no tooltips)."""
     pad, tw = 44, width - 88
+    stamp = generated_at or datetime.now().strftime("%B %-d, %Y")
     parts: list[str] = [
         f'<text x="{pad}" y="74" font-size="13" fill="#5F8C9D" font-weight="700" '
-        f'letter-spacing="0.08em">{escape(content.REPORT_ORG.upper())}</text>'
+        f'letter-spacing="0.08em">{escape(content.REPORT_ORG.upper())}</text>',
+        f'<text x="{width - pad:.0f}" y="74" font-size="11" fill="#7A8B93" '
+        f'text-anchor="end">Last updated on {escape(stamp)}</text>',
     ]
     y = 120
     for line in _wrap_text(content.REPORT_TITLE, tw, 27, 0.6):
@@ -187,11 +194,13 @@ def _treemap_with_header(tree_svg: str) -> tuple[str, float, list[Region]]:
         y += 8
 
     # Taxonomy definitions link — drawn as text, made clickable by a /Link annot.
-    link_label = f"Science field definitions: {content.TAXONOMY_URL}"
+    link_label = content.TAXONOMY_LINK_TEXT
+    lw = len(link_label) * 5.7
     parts.append(
         f'<text x="4" y="{y:.0f}" font-size="11" fill="#1456A0">{escape(link_label)}</text>'
+        f'<rect x="4" y="{y + 2:.0f}" width="{lw:.0f}" height="0.7" fill="#1456A0"/>'
     )
-    links.append((4, y - 11, min(tw, len(link_label) * 5.7), 15, content.TAXONOMY_URL))
+    links.append((4, y - 11, lw, 15, content.TAXONOMY_URL))
     y += 24
 
     parts.append(
@@ -267,18 +276,37 @@ def _add_page(
             raise ValueError("SVG has no viewBox")
         vx, vy, vw, vh = (float(v) for v in match.groups())
         wrapped = inner_svg
-    writer.append(PdfReader(io.BytesIO(cairosvg.svg2pdf(bytestring=wrapped.encode()))))
+    # Every page is rendered onto the same canvas (US Letter landscape) so the
+    # exported PDF has uniform page dimensions. The figure is scaled to fit
+    # while preserving its aspect ratio, then centred; the leftover margin is
+    # white. Without this, page sizes track each figure's natural size and the
+    # PDF pages come out visibly different shapes.
+    avail_w, avail_h = _PAGE_W - 2 * _PAGE_MARGIN, _PAGE_H - 2 * _PAGE_MARGIN
+    scale = min(avail_w / vw, avail_h / vh)
+    dw, dh = vw * scale, vh * scale
+    ox, oy = (_PAGE_W - dw) / 2, (_PAGE_H - dh) / 2
+    canvas = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'viewBox="0 0 {_PAGE_W:.0f} {_PAGE_H:.0f}" '
+        f'width="{_PAGE_W:.0f}" height="{_PAGE_H:.0f}" font-family="{FONT}">'
+        f'<rect width="{_PAGE_W:.0f}" height="{_PAGE_H:.0f}" fill="#FFFFFF"/>'
+        f'<g transform="translate({ox:.2f},{oy:.2f}) scale({scale:.6f}) '
+        f'translate({-vx:.2f},{-vy:.2f})">{wrapped}</g></svg>'
+    )
+    writer.append(PdfReader(io.BytesIO(cairosvg.svg2pdf(bytestring=canvas.encode()))))
     page = writer.pages[-1]
     pw, ph = float(page.mediabox.width), float(page.mediabox.height)
-    sx, sy = pw / vw, ph / vh
+    # Annotation coords must follow the same fit-and-centre transform.
+    sx = sy = scale * (pw / _PAGE_W)
+    ox_pt, oy_pt = ox * (pw / _PAGE_W), oy * (ph / _PAGE_H)
 
     def _rect(x: float, y: float, w: float, h: float) -> ArrayObject:
         return ArrayObject(
             [
-                FloatObject((x - vx) * sx),
-                FloatObject(ph - (y + h - vy) * sy),  # PDF y is bottom-up
-                FloatObject((x + w - vx) * sx),
-                FloatObject(ph - (y - vy) * sy),
+                FloatObject(ox_pt + (x - vx) * sx),
+                FloatObject(ph - oy_pt - (y + h - vy) * sy),  # PDF y is bottom-up
+                FloatObject(ox_pt + (x + w - vx) * sx),
+                FloatObject(ph - oy_pt - (y - vy) * sy),
             ]
         )
 

@@ -189,7 +189,7 @@ class TestTreemapTerminology:
         # 1 tag on BASE_ROW + 2 tags on TWO_FIELD_ROW = 3 field tags, 2 initiatives.
         assert ">3<" in svg
         assert content.TERM_FIELD_TAGS.upper() in svg
-        assert "PARTNERSHIPS" not in svg
+        assert ">PARTNERSHIPS<" not in svg  # the original mislabel
 
     def test_science_areas_shows_a_denominator(self, tmp_path):
         """Lindsay asked '8 of 8?' — the stat needs parity with 'x/y SUBFIELDS'."""
@@ -214,14 +214,14 @@ class TestTreemapTerminology:
         assert any(t == "Hydrology: 2 partnership initiatives" for t in tips)
         assert any(t == "Climatology: 1 partnership initiative" for t in tips)
 
-    def test_gap_cells_read_as_zero_initiatives(self, tmp_path):
+    def test_cells_with_no_partnerships_are_labelled(self, tmp_path):
         data = make_data(tmp_path, [BASE_ROW])
         tax_p = write_csv(tmp_path, "tax.csv", TAXONOMY_ROWS)
         enrich_science_fields(data, tax_p)
         _, regions = treemap_coverage_svg(data, tax_p)
 
         tips = [tip for *_, tip in regions]
-        assert "Meteorology: coverage gap (0 partnership initiatives)" in tips
+        assert f"Meteorology: {content.TERM_NO_PARTNERSHIPS_LOWER}" in tips
 
     def test_category_headers_say_field_tags(self, tmp_path):
         """Category totals sum subfield counts, so they double-count initiatives."""
@@ -231,7 +231,7 @@ class TestTreemapTerminology:
         svg, _ = treemap_coverage_svg(data, tax_p)
 
         assert "field tag" in svg
-        assert "partnerships</text>" not in svg
+        assert ">PARTNERSHIPS<" not in svg
 
     def test_browser_treemap_shares_the_same_vocabulary(self, tmp_path):
         """The HTML and SVG renderers must not drift apart on wording."""

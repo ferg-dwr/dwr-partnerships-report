@@ -131,7 +131,7 @@ def treemap_coverage(
     The treemap grows vertically as the taxonomy expands — no horizontal squishing.
 
     Blue hues (light → dark) = 1 → N partnerships.
-    Grey hatched cells = coverage gaps (0 partnerships).
+    Grey hatched cells = subfields with no recorded partnerships.
     Click a category header to zoom in; Esc or click header to zoom out.
 
     :param data:          PartnershipData instance (must be enriched)
@@ -153,6 +153,7 @@ def treemap_coverage(
             "initiativesLower": content.TERM_INITIATIVES_LOWER,
             "fieldTags": content.TERM_FIELD_TAGS,
             "fieldTagsLower": content.TERM_FIELD_TAGS_LOWER,
+            "noPartnerships": content.TERM_NO_PARTNERSHIPS,
         },
     )
 
@@ -230,22 +231,12 @@ def _squarify(items: list[dict], x: float, y: float, w: float, h: float) -> list
                 rh = r["area"] / other if other else 0.0
                 result.append({"x": cx, "y": cy, "w": other, "h": rh, "datum": r["datum"]})
                 cy += rh
-            return {
-                "x": rct["x"] + other,
-                "y": rct["y"],
-                "w": rct["w"] - other,
-                "h": rct["h"],
-            }
+            return {"x": rct["x"] + other, "y": rct["y"], "w": rct["w"] - other, "h": rct["h"]}
         for r in current:
             rw = r["area"] / other if other else 0.0
             result.append({"x": cx, "y": cy, "w": rw, "h": other, "datum": r["datum"]})
             cx += rw
-        return {
-            "x": rct["x"],
-            "y": rct["y"] + other,
-            "w": rct["w"],
-            "h": rct["h"] - other,
-        }
+        return {"x": rct["x"], "y": rct["y"] + other, "w": rct["w"], "h": rct["h"] - other}
 
     i = 0
     while i < len(scaled):
@@ -302,20 +293,13 @@ def _layout_treemap(taxonomy: list[dict], width: float, height: float) -> list[d
     for c in taxonomy:
         subs: list[dict[str, Any]] = sorted(
             (
-                {
-                    "value": cell_value(s["count"]),
-                    "datum": {**s, "category": c["category"]},
-                }
+                {"value": cell_value(s["count"]), "datum": {**s, "category": c["category"]}}
                 for s in c["subfields"]
             ),
             key=lambda d: -d["value"],
         )
         cats.append(
-            {
-                "category": c["category"],
-                "subs": subs,
-                "total": sum(s["value"] for s in subs),
-            }
+            {"category": c["category"], "subs": subs, "total": sum(s["value"] for s in subs)}
         )
 
     cat_items = sorted(({"value": c["total"], "datum": c} for c in cats), key=lambda d: -d["value"])
@@ -418,7 +402,7 @@ def treemap_coverage_svg(
             (content.TERM_FIELD_TAGS.upper(), str(total_part), "#003366"),
             ("SCIENCE AREAS COVERED", f"{covered_cats}/{len(taxonomy)}", "#003366"),
             ("SUBFIELDS COVERED", f"{total_subs - gaps}/{total_subs}", "#003366"),
-            ("COVERAGE GAPS", str(gaps), "#B85A1E"),
+            (content.TERM_NO_PARTNERSHIPS.upper(), str(gaps), "#B85A1E"),
         ]
     ):
         cx = 4 + i * 200
@@ -435,8 +419,8 @@ def treemap_coverage_svg(
         '<text x="258" y="76" font-size="9" fill="#999">fewer \u2192 more</text>'
         f'<rect x="348" y="66" width="14" height="12" rx="2" fill="{_GAP_FILL}"/>'
         '<rect x="348" y="66" width="14" height="12" rx="2" fill="url(#hatch)"/>'
-        f'<text x="368" y="76" font-size="10" fill="#666">Coverage gap '
-        f"(0 {escape(content.TERM_INITIATIVES_LOWER)})</text>"
+        f'<text x="368" y="76" font-size="10" fill="#666">'
+        f"{escape(content.TERM_NO_PARTNERSHIPS)}</text>"
     )
 
     parts.append(f'<g transform="translate(0,{summary_h:.0f})">')
@@ -551,7 +535,7 @@ def treemap_coverage_svg(
                 # A subfield's count is the number of distinct initiatives tagged
                 # with it, so "initiatives" is the correct noun at the cell level.
                 tip = (
-                    f"{d['name']}: coverage gap (0 {content.TERM_INITIATIVES_LOWER})"
+                    f"{d['name']}: {content.TERM_NO_PARTNERSHIPS_LOWER}"
                     if is_gap
                     else f"{d['name']}: {content.plural_initiatives(d['count'])}"
                 )
