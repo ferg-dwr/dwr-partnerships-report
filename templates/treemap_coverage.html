@@ -305,8 +305,8 @@ function CategoryHeader({ header, fill, isZoomed, onClick, hover, onEnter, onLea
   // Adaptive meta
   // `total` sums this category's subfield counts, so an initiative tagged with two
   // subfields in the same category is counted twice — these are field tags.
-  const metaLong  = `${total} field tag${total!==1?"s":""}${gapCount>0?` · ${gapCount} gap${gapCount!==1?"s":""}` : ""}`;
-  const metaShort = `${total}t${gapCount>0?` · ${gapCount}g`:""}`;
+  const metaLong  = `${total} field tag${total!==1?"s":""}${gapCount>0?` · ${gapCount} without partnerships` : ""}`;
+  const metaShort = `${total}t${gapCount>0?` · ${gapCount}n`:""}`;
   const meta = (metaLong.length * 6.5 < w - 20) ? metaLong : metaShort;
   const clipId = `hdr-${Math.round(x)}-${Math.round(y)}`;
   const pad = isZoomed ? 22 : 10;
@@ -535,7 +535,7 @@ function App() {
             <div className="count">
               <span className="lbl">{window.DWR_TERMS.initiatives}</span>
               <span className={`val${tip.datum.count===0?" gap":""}`}>
-                {tip.datum.count === 0 ? "0 — coverage gap" : tip.datum.count}
+                {tip.datum.count === 0 ? window.DWR_TERMS.noPartnerships : tip.datum.count}
               </span>
             </div>
           </div>

@@ -133,6 +133,23 @@ class TestPdfStructure:
         assert counts[1] > 0
         assert counts[2] > 0
 
+    def test_pages_are_a_uniform_size(self, built_pdf):
+        """Figures are letterboxed onto one canvas so page dimensions match."""
+        sizes = {
+            (round(float(p.mediabox.width)), round(float(p.mediabox.height)))
+            for p in _reader(built_pdf).pages
+        }
+        assert len(sizes) == 1
+
+    def test_acrobat_note_appears_once_on_the_first_page(self, built_pdf):
+        """The tooltip note is stated once on the intro page, not repeated as a
+        band above every figure."""
+        pages = [_squash(p.extract_text()) for p in _reader(built_pdf).pages]
+        marker = _squash("Open this PDF in Adobe Acrobat Reader")
+        assert marker in pages[0]
+        assert marker not in pages[1]
+        assert marker not in pages[2]
+
 
 # ---------------------------------------------------------------------------
 # Lindsay's July 2026 review

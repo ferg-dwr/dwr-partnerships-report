@@ -125,7 +125,14 @@ def _intro_svg(width: float = 920, generated_at: str | None = None) -> str:
             )
             y += 20
         y += 14
-    total_h = y + 20
+    # The Acrobat tooltip note lives here, once, rather than repeating as a
+    # band above every figure page.
+    y += 6
+    parts.append(
+        f'<text x="{pad}" y="{y}" font-size="11.5" font-style="italic" '
+        f'fill="#5F8C9D">{_NOTE}</text>'
+    )
+    total_h = y + 24
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width:.0f} {total_h:.0f}" '
         f'width="{width:.0f}" height="{total_h:.0f}" font-family="{FONT}">'
@@ -142,15 +149,17 @@ def _dashboard_with_captions(dash_svg: str) -> str:
     vx, vy, vw, vh = (float(v) for v in match.groups())
     body = dash_svg[dash_svg.index(">") + 1 : dash_svg.rindex("</svg>")]
     parts: list[str] = []
-    y = vy + vh + 4
+    y = vy + vh + 2
     for line in _wrap_text(content.INVESTMENT_NOTE, 900, 11, 0.52):
         parts.append(f'<text x="0" y="{y:.0f}" font-size="11" fill="#333">{escape(line)}</text>')
-        y += 17
-    y += 8
+        y += 14
+    y += 6
     for line in _wrap_text(f"* {content.FINANCIAL_DISCLAIMER}", 900, 10, 0.52):
         parts.append(f'<text x="0" y="{y:.0f}" font-size="10" fill="#777">{escape(line)}</text>')
-        y += 15
-    new_vh = (y + 12) - vy
+        y += 13
+    # Breathing room below the last line so the disclaimer is not flush against
+    # the trim edge once the figure is letterboxed onto the page canvas.
+    new_vh = (y + 26) - vy
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vx:.0f} {vy:.0f} {vw:.0f} {new_vh:.0f}" '
         f'width="{vw:.0f}" height="{new_vh:.0f}" font-family="{FONT}">'
@@ -177,8 +186,8 @@ def _treemap_with_header(tree_svg: str) -> tuple[str, float, list[Region]]:
 
     parts: list[str] = []
     links: list[Region] = []
-    # Start below the italic Acrobat note band that _wrap_with_note draws above vy.
-    y = 20.0
+    # Leave room for the 19pt title's ascender above its baseline.
+    y = 22.0
 
     parts.append(
         f'<text x="4" y="{y:.0f}" font-size="19" font-weight="700" fill="#1F3A47">'
@@ -201,13 +210,13 @@ def _treemap_with_header(tree_svg: str) -> tuple[str, float, list[Region]]:
         f'<rect x="4" y="{y + 2:.0f}" width="{lw:.0f}" height="0.7" fill="#1456A0"/>'
     )
     links.append((4, y - 11, lw, 15, content.TAXONOMY_URL))
-    y += 24
+    y += 20
 
     parts.append(
         f'<text x="4" y="{y:.0f}" font-size="11.5" font-weight="700" fill="#1F3A47">'
         "How to read this figure</text>"
     )
-    y += 19
+    y += 17
     for item in content.TREEMAP_HOW_TO_READ:
         wrapped = _wrap_text(item, tw - 16, 11, 0.52)
         for i, line in enumerate(wrapped):
@@ -216,8 +225,8 @@ def _treemap_with_header(tree_svg: str) -> tuple[str, float, list[Region]]:
                 f'<text x="{4 if i == 0 else 14}" y="{y:.0f}" font-size="11" fill="#333">'
                 f"{escape(bullet + line) if i == 0 else escape(line)}</text>"
             )
-            y += 16
-        y += 4
+            y += 14
+        y += 2
     y += 10
 
     shift = y - vy
@@ -374,14 +383,14 @@ def export_report_pdf(
     dash = render_summary(summary)
     dash_svg = dash[dash.index("<svg") : dash.rindex("</svg>") + 6]
     dash_svg = _dashboard_with_captions(dash_svg)
-    _add_page(writer, all_fields, dash_svg, _dashboard_regions(summary, ctx))
+    _add_page(writer, all_fields, dash_svg, _dashboard_regions(summary, ctx), with_note=False)
 
     # Page 3 — science-coverage treemap (landscape; height auto-fits the subfields),
     # preceded by its title, description, and how-to-read guidance.
     tree_svg, tree_regions = treemap_coverage_svg(data, taxonomy_path, width=1400)
     tree_svg, y_shift, tree_links = _treemap_with_header(tree_svg)
     tree_regions = [(x, y + y_shift, w, h, tip) for x, y, w, h, tip in tree_regions]
-    _add_page(writer, all_fields, tree_svg, tree_regions, links=tree_links)
+    _add_page(writer, all_fields, tree_svg, tree_regions, with_note=False, links=tree_links)
 
     writer._root_object[NameObject("/AcroForm")] = writer._add_object(
         DictionaryObject(
