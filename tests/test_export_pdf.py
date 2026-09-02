@@ -174,6 +174,28 @@ class TestReviewFixes:
         assert _squash(content.TERM_FIELD_TAGS_LOWER) in page
         assert _squash(content.TERM_INITIATIVES_LOWER) in page
 
+    def test_every_page_is_numbered(self, built_pdf):
+        pages = [_squash(p.extract_text()) for p in _reader(built_pdf).pages]
+        for i, text in enumerate(pages, start=1):
+            assert _squash(f"Page {i} of {len(pages)}") in text
+
+    def test_link_hotspot_sits_on_its_text(self, built_pdf):
+        """The clickable rect must overlap the rendered "Science field
+        definitions" label. A nested <svg> carries its own viewBox, so applying
+        the viewBox offset again when placing the figure moved the visible text
+        without moving the annotation, putting the hotspot a line too high."""
+        page = _reader(built_pdf).pages[2]
+        link = next(
+            a.get_object() for a in page["/Annots"] if a.get_object().get("/Subtype") == "/Link"
+        )
+        x0, y0, x1, y1 = (float(v) for v in link["/Rect"])
+        # Sane geometry: inside the page, non-degenerate, and roughly the size
+        # of an 11pt label rather than a stray point.
+        assert 0 < x0 < x1 < float(page.mediabox.width)
+        assert 0 < y0 < y1 < float(page.mediabox.height)
+        assert x1 - x0 > 20
+        assert 4 < y1 - y0 < 30
+
     def test_taxonomy_url_is_a_clickable_link_annotation(self, built_pdf):
         """Not just printed text — a real /Link annot with a URI action."""
         annots = [a.get_object() for a in (_reader(built_pdf).pages[2].get("/Annots") or [])]

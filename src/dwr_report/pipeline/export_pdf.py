@@ -40,7 +40,10 @@ from dwr_report.ingest.loader import PartnershipData
 
 # Uniform page canvas: US Letter landscape at 96dpi-ish SVG units.
 _PAGE_W, _PAGE_H = 1100.0, 850.0
-_PAGE_MARGIN = 26.0  # keeps figures off the trim edge
+_PAGE_MARGIN = 26.0
+_TOTAL_PAGES = (
+    3  # intro, summary dashboard, science-field treemap  # keeps figures off the trim edge
+)
 _NOTE_H = 34  # top band height (SVG units) reserved for the note
 _NOTE = (
     "NOTE: Open this PDF in Adobe Acrobat Reader to see the interactive "
@@ -230,6 +233,10 @@ def _treemap_with_header(tree_svg: str) -> tuple[str, float, list[Region]]:
     y += 10
 
     shift = y - vy
+    # `parts` render inside translate(0, vy), so a local baseline y appears at
+    # y + vy. Annotation rects are mapped from the same absolute space, so they
+    # need that same single shift — applying it twice put the clickable area one
+    # line above the "Science field definitions" text.
     shifted_links = [(lx, ly + vy, lw, lh, url) for lx, ly, lw, lh, url in links]
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" '
@@ -275,6 +282,8 @@ def _add_page(
     regions: list[Region],
     with_note: bool = True,
     links: list[Region] | None = None,
+    page_number: int | None = None,
+    total_pages: int | None = None,
 ) -> None:
     """Render one SVG figure to a PDF page and overlay its tooltip annotations."""
     if with_note:
@@ -299,8 +308,20 @@ def _add_page(
         f'viewBox="0 0 {_PAGE_W:.0f} {_PAGE_H:.0f}" '
         f'width="{_PAGE_W:.0f}" height="{_PAGE_H:.0f}" font-family="{FONT}">'
         f'<rect width="{_PAGE_W:.0f}" height="{_PAGE_H:.0f}" fill="#FFFFFF"/>'
-        f'<g transform="translate({ox:.2f},{oy:.2f}) scale({scale:.6f}) '
-        f'translate({-vx:.2f},{-vy:.2f})">{wrapped}</g></svg>'
+        # No translate(-vx,-vy) here: `wrapped` is a nested <svg> with its own
+        # viewBox, which already maps its origin to its top-left corner. Applying
+        # the offset again moved visible content without moving the annotation
+        # rects, putting the taxonomy link's hotspot a line above its text.
+        f'<g transform="translate({ox:.2f},{oy:.2f}) scale({scale:.6f})">'
+        f"{wrapped}</g>"
+        + (
+            f'<text x="{_PAGE_W / 2:.0f}" y="{_PAGE_H - 14:.0f}" font-size="12" '
+            f'fill="#8A9BA3" text-anchor="middle">'
+            f"Page {page_number} of {total_pages}</text>"
+            if page_number and total_pages
+            else ""
+        )
+        + "</svg>"
     )
     writer.append(PdfReader(io.BytesIO(cairosvg.svg2pdf(bytestring=canvas.encode()))))
     page = writer.pages[-1]
@@ -375,7 +396,15 @@ def export_report_pdf(
     all_fields = ArrayObject()
 
     # Page 1 — title + introduction (no tooltips, no hover note)
-    _add_page(writer, all_fields, _intro_svg(), [], with_note=False)
+    _add_page(
+        writer,
+        all_fields,
+        _intro_svg(),
+        [],
+        with_note=False,
+        page_number=1,
+        total_pages=_TOTAL_PAGES,
+    )
 
     # Page 2 — summary dashboard, with the investment note + disclaimer below it
     summary = compute_summary(data)
@@ -383,14 +412,31 @@ def export_report_pdf(
     dash = render_summary(summary)
     dash_svg = dash[dash.index("<svg") : dash.rindex("</svg>") + 6]
     dash_svg = _dashboard_with_captions(dash_svg)
-    _add_page(writer, all_fields, dash_svg, _dashboard_regions(summary, ctx), with_note=False)
+    _add_page(
+        writer,
+        all_fields,
+        dash_svg,
+        _dashboard_regions(summary, ctx),
+        with_note=False,
+        page_number=2,
+        total_pages=_TOTAL_PAGES,
+    )
 
     # Page 3 — science-coverage treemap (landscape; height auto-fits the subfields),
     # preceded by its title, description, and how-to-read guidance.
     tree_svg, tree_regions = treemap_coverage_svg(data, taxonomy_path, width=1400)
     tree_svg, y_shift, tree_links = _treemap_with_header(tree_svg)
     tree_regions = [(x, y + y_shift, w, h, tip) for x, y, w, h, tip in tree_regions]
-    _add_page(writer, all_fields, tree_svg, tree_regions, with_note=False, links=tree_links)
+    _add_page(
+        writer,
+        all_fields,
+        tree_svg,
+        tree_regions,
+        with_note=False,
+        links=tree_links,
+        page_number=3,
+        total_pages=_TOTAL_PAGES,
+    )
 
     writer._root_object[NameObject("/AcroForm")] = writer._add_object(
         DictionaryObject(
