@@ -67,6 +67,7 @@ A single initiative tagged with four science fields contributes four field tags,
 - Blue hues scale with the number of partnership initiatives per subfield; grey hatched cells have **no recorded partnerships**
 - Click a category header to zoom in; hover to see back affordance (gold cue)
 - Stats bar always visible: science field tags · science areas covered · subfields covered · no recorded partnerships
+- Category headers show a field-tag count, falling back to shorter forms in narrow panels rather than clipping mid-word
 - Links out to the [science field taxonomy definitions](https://cadwr.app.box.com/s/bq56dj39aqzb5cc526ewcul5v5606eew)
 
 ### Organizational Network: Science ↔ Staff ↔ Division (tripartite)
@@ -83,13 +84,13 @@ A single initiative tagged with four science fields contributes four field tags,
 - Accordion legend: How to use · Node Size · Partner Types · Top 5 Divisions · Top 5 Organizations
 
 ### Supplemental PDF
-Generated with `--pdf`, three pages of uniform size:
+Generated with `--pdf`. Three pages of uniform size, each numbered `Page N of 3`:
 
 1. **Title and introduction** — background, purpose, contact, last-updated stamp
 2. **Summary dashboard** — headline figures, organization types, investment types, science fields, partnership activities
 3. **Science field treemap** — with title, description, how-to-read guidance, and a clickable taxonomy link
 
-Figures carry hover tooltips as PDF annotations. These render in Adobe Acrobat Reader; most browser PDF viewers ignore them.
+Every figure is scaled to fit a shared landscape canvas so exported page dimensions match. Figures carry hover tooltips as PDF annotations, noted once on the intro page rather than above each figure. Tooltips and the taxonomy link render in Adobe Acrobat Reader; most browser PDF viewers ignore annotations.
 
 ### Diff banner
 - Shows new / removed / updated counts after each upload
@@ -137,7 +138,7 @@ dwr-partnerships-report/
 │   ├── network_tripartite.html     # Jinja2 + vis.js: Science ↔ Staff ↔ Division
 │   └── network_bipartite.html      # Jinja2 + vis.js: Division ↔ Partner Organization
 │
-├── tests/                          # 182 tests, ~92% coverage
+├── tests/                          # 187 tests, ~91% coverage
 │   ├── test_content.py             # Vocabulary guards
 │   ├── test_export_pdf.py          # PDF structure, annotations, review fixes
 │   ├── test_treemaps.py            # Layout + terminology guards
@@ -195,11 +196,18 @@ cd reports && python -m http.server 8000
 
 > Hard-refresh (`Ctrl+Shift+R` / `Cmd+Shift+R`) after regenerating to bypass browser cache.
 
-Swap in `--csv data/inventory.csv` for a realistic render — the treemap and network layouts behave differently at 119 rows than at 5. That file is gitignored and must stay that way; it contains partner email addresses and named DWR staff.
+Swap in `--csv data/inventory.csv` for a realistic render — the treemap and network layouts behave differently at 119 rows than at 5, and the published site is built from the 5-row sample. Any PDF sent to reviewers should be built from `inventory.csv`. That file is gitignored and must stay that way; it contains partner email addresses and named DWR staff.
 
 ### Expanding the taxonomy
 
 Edit `data/dwr_custom_taxonomy.csv` to add new science categories or fields. The treemap layout recalculates automatically — no code changes needed.
+
+### Testing rendered output
+
+Two classes of assertion in this suite are easy to get wrong:
+
+- **Extracted PDF text** is a library's interpretation of a rendering, not something the code controls. pypdf infers word spacing from glyph positions and the heuristic changed between 5.x and 6.x, collapsing spaces in small text runs. `tests/test_export_pdf.py` normalises whitespace before comparing; keep new assertions doing the same, and prefer asserting against generated SVG where element boundaries are exact.
+- **Annotation geometry** needs checking against the text it covers, not just against page bounds. A hotspot can sit entirely inside the page and still miss its label.
 
 ---
 
